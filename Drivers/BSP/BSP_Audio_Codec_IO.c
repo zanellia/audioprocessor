@@ -1,32 +1,35 @@
 #include "stm32f7xx_hal.h"
+#include "stm32746g_discovery.h"
 
 /**
   * @brief User can use this section to tailor I2C4/I2C4 instance used and associated
   * resources (audio codec).
   * Definition for I2C4 clock resources
   */
-#define DISCOVERY_AUDIO_I2Cx                             I2C4
-#define DISCOVERY_AUDIO_I2Cx_CLK_ENABLE()                __HAL_RCC_I2C4_CLK_ENABLE()
+// #define DISCOVERY_AUDIO_I2Cx                             I2C4
+// #define DISCOVERY_AUDIO_I2Cx_CLK_ENABLE()                __HAL_RCC_I2C4_CLK_ENABLE()
 #define DISCOVERY_AUDIO_I2Cx_SCL_GPIO_CLK_ENABLE()       __HAL_RCC_GPIOD_CLK_ENABLE()
 #define DISCOVERY_AUDIO_I2Cx_SDA_GPIO_CLK_ENABLE()       __HAL_RCC_GPIOB_CLK_ENABLE()
 
-#define DISCOVERY_AUDIO_I2Cx_FORCE_RESET()               __HAL_RCC_I2C4_FORCE_RESET()
-#define DISCOVERY_AUDIO_I2Cx_RELEASE_RESET()             __HAL_RCC_I2C4_RELEASE_RESET()
+// #define DISCOVERY_AUDIO_I2Cx_FORCE_RESET()               __HAL_RCC_I2C4_FORCE_RESET()
+// #define DISCOVERY_AUDIO_I2Cx_RELEASE_RESET()             __HAL_RCC_I2C4_RELEASE_RESET()
 
-/** @brief Definition for I2C4 Pins
-  */
-#define DISCOVERY_AUDIO_I2Cx_SCL_PIN                     GPIO_PIN_12 /*!< PD12 */
-#define DISCOVERY_AUDIO_I2Cx_SCL_AF                      GPIO_AF4_I2C4
-#define DISCOVERY_AUDIO_I2Cx_SCL_GPIO_PORT               GPIOD
-#define DISCOVERY_AUDIO_I2Cx_SDA_PIN                     GPIO_PIN_7 /*!< PB7 */
-#define DISCOVERY_AUDIO_I2Cx_SDA_AF                      GPIO_AF11_I2C4
-#define DISCOVERY_AUDIO_I2Cx_SDA_GPIO_PORT               GPIOB
-/** @brief Definition of I2C4 interrupt requests
-  */
-#define DISCOVERY_AUDIO_I2Cx_EV_IRQn                     I2C4_EV_IRQn
-#define DISCOVERY_AUDIO_I2Cx_ER_IRQn                     I2C4_ER_IRQn
+// /** @brief Definition for I2C4 Pins
+//   */
+// #define DISCOVERY_AUDIO_I2Cx_SCL_PIN                     GPIO_PIN_12 /*!< PD12 */
+// #define DISCOVERY_AUDIO_I2Cx_SCL_AF                      GPIO_AF4_I2C4
+// #define DISCOVERY_AUDIO_I2Cx_SCL_GPIO_PORT               GPIOD
+// #define DISCOVERY_AUDIO_I2Cx_SDA_PIN                     GPIO_PIN_7 /*!< PB7 */
+// #define DISCOVERY_AUDIO_I2Cx_SDA_AF                      GPIO_AF11_I2C4
+// #define DISCOVERY_AUDIO_I2Cx_SDA_GPIO_PORT               GPIOB
+// #define DISCOVERY_AUDIO_I2Cx_SCL_SDA_AF                  GPIO_AF4_I2C3
+// #define DISCOVERY_AUDIO_I2Cx_SCL_SDA_GPIO_PORT           GPIOH
+// /** @brief Definition of I2C4 interrupt requests
+//   */
+// #define DISCOVERY_AUDIO_I2Cx_EV_IRQn                     I2C4_EV_IRQn
+// #define DISCOVERY_AUDIO_I2Cx_ER_IRQn                     I2C4_ER_IRQn
 
-#define DISCOVERY_I2Cx_TIMING                      ((uint32_t)0x40912732)
+// #define DISCOVERY_I2Cx_TIMING                      ((uint32_t)0x40912732)
 
 
 static I2C_HandleTypeDef hI2cAudioHandler = {0};
@@ -143,18 +146,30 @@ static void I2Cx_MspInit(I2C_HandleTypeDef *i2c_handler)
   /* Enable GPIO clock */
   DISCOVERY_AUDIO_I2Cx_SCL_GPIO_CLK_ENABLE();
   DISCOVERY_AUDIO_I2Cx_SDA_GPIO_CLK_ENABLE();
+  // /* Configure I2C Tx as alternate function */
+  // gpio_init_structure.Pin = DISCOVERY_AUDIO_I2Cx_SCL_PIN;
+  // gpio_init_structure.Mode = GPIO_MODE_AF_OD;
+  // gpio_init_structure.Pull = GPIO_NOPULL;
+  // gpio_init_structure.Speed = GPIO_SPEED_FAST;
+  // gpio_init_structure.Alternate = DISCOVERY_AUDIO_I2Cx_SCL_AF;
+  // HAL_GPIO_Init(DISCOVERY_AUDIO_I2Cx_SCL_GPIO_PORT, &gpio_init_structure);
+
+  // /* Configure I2C Rx as alternate function */
+  // gpio_init_structure.Pin = DISCOVERY_AUDIO_I2Cx_SDA_PIN;
+  // gpio_init_structure.Alternate = DISCOVERY_AUDIO_I2Cx_SDA_AF;
+  // HAL_GPIO_Init(DISCOVERY_AUDIO_I2Cx_SDA_GPIO_PORT, &gpio_init_structure);
+
   /* Configure I2C Tx as alternate function */
   gpio_init_structure.Pin = DISCOVERY_AUDIO_I2Cx_SCL_PIN;
   gpio_init_structure.Mode = GPIO_MODE_AF_OD;
   gpio_init_structure.Pull = GPIO_NOPULL;
   gpio_init_structure.Speed = GPIO_SPEED_FAST;
-  gpio_init_structure.Alternate = DISCOVERY_AUDIO_I2Cx_SCL_AF;
-  HAL_GPIO_Init(DISCOVERY_AUDIO_I2Cx_SCL_GPIO_PORT, &gpio_init_structure);
+  gpio_init_structure.Alternate = DISCOVERY_AUDIO_I2Cx_SCL_SDA_AF;
+  HAL_GPIO_Init(DISCOVERY_AUDIO_I2Cx_SCL_SDA_GPIO_PORT, &gpio_init_structure);
 
   /* Configure I2C Rx as alternate function */
   gpio_init_structure.Pin = DISCOVERY_AUDIO_I2Cx_SDA_PIN;
-  gpio_init_structure.Alternate = DISCOVERY_AUDIO_I2Cx_SDA_AF;
-  HAL_GPIO_Init(DISCOVERY_AUDIO_I2Cx_SDA_GPIO_PORT, &gpio_init_structure);
+  HAL_GPIO_Init(DISCOVERY_AUDIO_I2Cx_SCL_SDA_GPIO_PORT, &gpio_init_structure);
 
   /*** Configure the I2C peripheral ***/
   /* Enable I2C clock */

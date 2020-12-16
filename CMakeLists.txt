@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.0)
 ########################################
 # NAME
 #######################################
-set(TARGET_BASENAME stm32f769-discovery-audio-processor)
+set(TARGET_BASENAME stm32f746-discovery-audio-processor)
 project(audio-processor)
 
 #############################################################
@@ -37,7 +37,7 @@ set(C_SOURCES_SYSTEM
     "${SOURCE_ROOT_DIR}/System/MIDI_Input_Task.c"
     "${SOURCE_ROOT_DIR}/System/Monitor_Task.c"
     "${SOURCE_ROOT_DIR}/System/SerialLogger_Task.c"
-    "${SOURCE_ROOT_DIR}/System/startup_stm32f769xx.s"
+    "${SOURCE_ROOT_DIR}/System/startup_stm32f746xx.s"
     "${SOURCE_ROOT_DIR}/System/stm32f7xx_it.c"
 )
 
@@ -126,7 +126,7 @@ if(TOOLCHAIN STREQUAL "CROSS")
 
   set(TARGET_SPECIFIC_FLAGS " ")
   string(APPEND TARGET_SPECIFIC_FLAGS "  -mcpu=cortex-m7 -mthumb  -DARM_MATH_CM7 ")
-  string(APPEND TARGET_SPECIFIC_FLAGS " -mfloat-abi=hard -mfpu=fpv5-d16 -DSTM32F769xx -DUSE_HAL_DRIVER ")
+  string(APPEND TARGET_SPECIFIC_FLAGS " -mfloat-abi=hard -mfpu=fpv5-d16 -DSTM32F746xx -DUSE_HAL_DRIVER ")
   string(APPEND TARGET_SPECIFIC_FLAGS " --no-exceptions ")
 
   string(APPEND CMAKE_C_FLAGS ${TARGET_SPECIFIC_FLAGS})
@@ -207,10 +207,11 @@ endfunction()
 ############################################################
 if(BUILD_PROD AND TOOLCHAIN STREQUAL "CROSS")
   add_executable(${TARGET_BASENAME}  ${C_SOURCES} ${ASM_SOURCES})
-  target_link_libraries(${TARGET_BASENAME} "-L../static-libs/" "-l:libarm_cortexM7lfdp_math.a")
+  target_link_libraries(${TARGET_BASENAME} "-L${TOOLCHAIN_PATH}../lib/gcc/arm-none-eabi/7.3.1/" "-L../static-libs/" "-l:libarm_cortexM7lfdp_math.a -l:libgcc_arm.a" )
+
 
   # Linker Flags
-  SET(PATH_TO_LINKERSCRIPT "../System/STM32F769NIHx_FLASH.ld")
+  SET(PATH_TO_LINKERSCRIPT "../System/STM32F746NGHx_FLASH.ld")
   string(APPEND TARGET_LINK_FLAGS " -specs=nosys.specs -specs=nano.specs ")
   string(APPEND TARGET_LINK_FLAGS " -T${PATH_TO_LINKERSCRIPT}  ")
   set_target_properties(${TARGET_BASENAME} PROPERTIES LINK_FLAGS ${TARGET_LINK_FLAGS} )
@@ -241,7 +242,7 @@ elseif(BUILD_APP_ONLY AND TOOLCHAIN STREQUAL "CROSS")
   target_link_libraries(${THIS_TARGET_NAME} "-L../static-libs/" "-l:libarm_cortexM7lfdp_math.a")
 
   # Linker Flags
-  SET(PATH_TO_LINKERSCRIPT "../System/STM32F769NIHx_FLASH_APP_ONLY.ld")
+  SET(PATH_TO_LINKERSCRIPT "../System/STM32F746NIHx_FLASH_APP_ONLY.ld")
   string(APPEND TARGET_LINK_FLAGS " -specs=nosys.specs -specs=nano.specs ")
   string(APPEND TARGET_LINK_FLAGS " -T${PATH_TO_LINKERSCRIPT}  ")
   set_target_properties(${THIS_TARGET_NAME} PROPERTIES LINK_FLAGS ${TARGET_LINK_FLAGS} )

@@ -60,19 +60,19 @@ int main(void)
   // Create this task first because other tasks send messages
   // Remember not to send messages in constructors because the message queue won't be created yet
 
-  xTaskCreate(SerialLogger_Task,
-              "Serial Logger Task",
-              myStackSize,
-              NULL, //task params
-              2, //priority
-              NULL ); //task handle
+  // xTaskCreate(SerialLogger_Task,
+  //             "Serial Logger Task",
+  //             myStackSize,
+  //             NULL, //task params
+  //             2, //priority
+  //             NULL ); //task handle
 
-  xTaskCreate(Monitor_Task,
-              "Monitor Task",
-              myStackSize,
-              NULL, //task params
-              1, //priority
-              NULL ); //task handle
+  // xTaskCreate(Monitor_Task,
+  //             "Monitor Task",
+  //             myStackSize,
+  //             NULL, //task params
+  //             1, //priority
+  //             NULL ); //task handle
 
   xTaskCreate(My_Audio_Task,
               "My Audio Task",
@@ -81,12 +81,12 @@ int main(void)
               8,  //priority
               NULL ); //task handle
 
-  xTaskCreate(MIDI_Input_Task,
-              "MIDI Input Task",
-              myStackSize,
-              NULL, //task params
-              3, //priority
-              NULL ); //task handle
+  // xTaskCreate(MIDI_Input_Task,
+  //             "MIDI Input Task",
+  //             myStackSize,
+  //             NULL, //task params
+  //             3, //priority
+  //             NULL ); //task handle
 
 
 
