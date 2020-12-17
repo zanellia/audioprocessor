@@ -1,6 +1,7 @@
 #include "MemoryLogger.h"
 #include "BSP_Bringup.h"
 #include "BSP_Audio_Task.h"
+#include "BSP_LCD_Task.h"
 #include "MIDI_Input_Task.h"
 #include "SerialLogger_Task.h"
 #include "Monitor_Task.h"
@@ -8,10 +9,27 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#define ASSERT(__condition__)                do { if(__condition__) \
+                                                   {  assert_failed(__FILE__, __LINE__); \
+                                                      while(1);  \
+                                                    } \
+                                              }while(0)
+
+void assert_failed(uint8_t* file, uint32_t line)
+{
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+
+  /* Infinite loop */
+  while (1)
+  {
+  }
+}
+
 static void SystemClock_Config(void);
 static void MPU_Config(void);
 
-// Declare these somewhere else?
+// // Declare these somewhere else?
 void vApplicationMallocFailedHook( void );
 void vApplicationStackOverflowHook( TaskHandle_t xTask, char *pcTaskName );
 void StartIdleMonitor (void);
@@ -21,8 +39,57 @@ void EndIdleMonitor (void);
 uint8_t  ucHeap[configTOTAL_HEAP_SIZE];
 
 
+static void
+led_on(void)
+{
+  HAL_GPIO_WritePin(GPIOI, GPIO_PIN_1, GPIO_PIN_SET);
+}
+
+
+static void
+led_off(void)
+{
+  HAL_GPIO_WritePin(GPIOI, GPIO_PIN_1, GPIO_PIN_RESET);
+}
+
+
+static void
+setup_led(void)
+{
+  GPIO_InitTypeDef gpioInitStructure;
+
+  __HAL_RCC_GPIOI_CLK_ENABLE();
+  gpioInitStructure.Pin = GPIO_PIN_1;
+  gpioInitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+  gpioInitStructure.Pull = GPIO_PULLUP;
+  gpioInitStructure.Speed = GPIO_SPEED_HIGH;
+  HAL_GPIO_Init(GPIOI, &gpioInitStructure);
+  led_off();
+}
+
+static void blink() 
+{
+
+  // for(int i = 0; i < 100; i++)
+  int i = 0;
+  for(;;)
+  {
+    if (i % 2)
+      led_off();
+    else
+      led_on();
+
+    for (int j = 0; j < 1000000; j++)
+      __asm volatile("nop");
+    ++i;
+  }
+}
+
+#if 1
 int main(void)
 {
+  setup_led();
+  blink();
   MPU_Config();
   SCB_InvalidateICache();
 
@@ -34,6 +101,7 @@ int main(void)
 
   SCB_InvalidateDCache();
   SCB_EnableDCache();
+
 
   /* STM32F7xx HAL library initialization:
   - Configure the Flash ART accelerator on ITCM interface
@@ -74,8 +142,15 @@ int main(void)
   //             1, //priority
   //             NULL ); //task handle
 
-  xTaskCreate(My_Audio_Task,
-              "My Audio Task",
+  // xTaskCreate(My_Audio_Task,
+  //             "My Audio Task",
+  //             myStackSize,
+  //             NULL, //task params
+  //             8,  //priority
+  //             NULL ); //task handle
+
+  xTaskCreate(My_LCD_Task,
+              "My LCD Task",
               myStackSize,
               NULL, //task params
               8,  //priority
@@ -95,6 +170,99 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   for( ;; );
 }
+#else
+
+#include "stm32746g_discovery_lcd.h"
+#define SDRAM_DEVICE_ADDR  ((uint32_t)0xC0000000)
+#define LCD_FRAME_BUFFER          SDRAM_DEVICE_ADDR
+#define LCD_OK                 ((uint8_t)0x00)
+#define LCD_ERROR              ((uint8_t)0x01)
+#define LCD_TIMEOUT            ((uint8_t)0x02)
+#define LTDC_ACTIVE_LAYER	     ((uint32_t)1) /* Layer 1 */
+
+
+static void Display_Description(void)
+{
+  uint8_t desc[50];
+
+  /* Set LCD Foreground Layer  */
+  BSP_LCD_SelectLayer(LTDC_ACTIVE_LAYER);
+
+  BSP_LCD_SetFont(&LCD_DEFAULT_FONT);
+
+  /* Clear the LCD */
+  BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
+  BSP_LCD_Clear(LCD_COLOR_WHITE);
+
+  /* Set the LCD Text Color */
+  BSP_LCD_SetTextColor(LCD_COLOR_DARKBLUE);
+
+  /* Display LCD messages */
+  BSP_LCD_DisplayStringAt(0, 10, (uint8_t *)"STM32F746G BSP", CENTER_MODE);
+  BSP_LCD_DisplayStringAt(0, 35, (uint8_t *)"Drivers examples", CENTER_MODE);
+
+  /* Draw Bitmap */
+  // BSP_LCD_DrawBitmap((BSP_LCD_GetXSize() - 80) / 2, 65, (uint8_t *)stlogo);
+
+  BSP_LCD_SetFont(&Font12);
+  BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() - 20, (uint8_t *)"Copyright (c) STMicroelectronics 2015", CENTER_MODE);
+
+  BSP_LCD_SetFont(&Font16);
+  BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
+  BSP_LCD_FillRect(0, BSP_LCD_GetYSize() / 2 + 15, BSP_LCD_GetXSize(), 60);
+  BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+  BSP_LCD_SetBackColor(LCD_COLOR_BLUE);
+  BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() / 2 + 30, (uint8_t *)"Press User Button to start :", CENTER_MODE);
+  sprintf((char *)desc, "%s AUDIO RECORD");
+  BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() / 2 + 45, (uint8_t *)desc, CENTER_MODE);
+}
+
+int main()
+{
+  
+
+  CPU_CACHE_Enable();
+  uint8_t  lcd_status = LCD_OK;
+
+  /* Enable the CPU Cache */
+  
+  /* STM32F7xx HAL library initialization:
+       - Configure the Flash prefetch, instruction and Data caches
+       - Configure the Systick to generate an interrupt each 1 msec
+       - Set NVIC Group Priority to 4
+       - Global MSP (MCU Support Package) initialization
+     */
+  HAL_Init();
+  setup_led();
+  blink();
+  /* Configure the system clock to 200 Mhz */
+  SystemClock_Config();
+
+  // BSP_LED_Init(LED1);
+
+  /* Configure the User Button in GPIO Mode */
+  // BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_GPIO);
+
+  /*##-1- Initialize the LCD #################################################*/
+  /* Initialize the LCD */
+  lcd_status = BSP_LCD_Init();
+  ASSERT(lcd_status != LCD_OK);
+
+  /* Initialize the LCD Layers */
+  BSP_LCD_LayerDefaultInit(LTDC_ACTIVE_LAYER, LCD_FRAME_BUFFER);
+
+
+  Display_Description();
+
+
+  /* Wait For User inputs */
+  while (1)
+  {
+    HAL_Delay(100);
+    Display_Description();
+  }
+}
+#endif
 
 void vApplicationStackOverflowHook( TaskHandle_t xTask, char *pcTaskName )
 {
@@ -109,7 +277,7 @@ void vApplicationMallocFailedHook( void )
   while(1);
 }
 
-//FREERTOS IDLE AND TICK HOOKS ARE IN MONITOR_TASK
+////FREERTOS IDLE AND TICK HOOKS ARE IN MONITOR_TASK
 
 void StartIdleMonitor (void)
 {
@@ -147,9 +315,17 @@ void EndIdleMonitor (void)
   */
 static void SystemClock_Config(void)
 {
+  HAL_StatusTypeDef ret = HAL_OK;
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
   RCC_OscInitTypeDef RCC_OscInitStruct;
-  HAL_StatusTypeDef ret = HAL_OK;
+  
+  /* Enable Power Control clock */
+  __HAL_RCC_PWR_CLK_ENABLE();
+
+  /* The voltage scaling allows optimizing the power consumption when the device is
+     clocked below the maximum system frequency, to update the voltage scaling value 
+     regarding system frequency refer to product datasheet.  */
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /* Enable HSE Oscillator and activate PLL with HSE as source */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
@@ -159,15 +335,13 @@ static void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLM = 25;
   RCC_OscInitStruct.PLL.PLLN = 400;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 9;
-  HAL_RCC_OscConfig(&RCC_OscInitStruct);
+  RCC_OscInitStruct.PLL.PLLQ = 8;
+  ret = HAL_RCC_OscConfig(&RCC_OscInitStruct);
+  ASSERT(ret != HAL_OK);
 
-  ret = HAL_PWREx_EnableOverDrive();
-
-  if(ret != HAL_OK)
-  {
-    while(1) { ; }
-  }
+  /* activate the OverDrive */
+  ret = HAL_PWREx_ActivateOverDrive();
+  ASSERT(ret != HAL_OK);
 
   /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
      clocks dividers */
@@ -176,7 +350,9 @@ static void SystemClock_Config(void)
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-  HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7);
+
+  ret = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5);
+  ASSERT(ret != HAL_OK);
 }
 
 
@@ -269,6 +445,15 @@ static void MPU_Config(void)
 
   /* Enable the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+}
+
+void CPU_CACHE_Enable(void)
+{
+  /* Enable I-Cache */
+  SCB_EnableICache();
+
+  /* Enable D-Cache */
+  SCB_EnableDCache();
 }
 
 #ifdef USE_FULL_ASSERT

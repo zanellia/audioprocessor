@@ -1,11 +1,12 @@
 #include "BSP_LED.h"
 #include "stm32f7xx_hal.h"
+#include "stm32746g_discovery.h"
 
 
-#define LED1_GPIO_PORT                   ((GPIO_TypeDef*)GPIOJ)
-#define LED2_GPIO_PORT                   ((GPIO_TypeDef*)GPIOJ)
+#define LED1_GPIO_PORT                   ((GPIO_TypeDef*)GPIOI)
+#define LED2_GPIO_PORT                   ((GPIO_TypeDef*)GPIOI)
 
-#define LED1_PIN                         ((uint32_t)GPIO_PIN_13)
+#define LED1_PIN                         ((uint32_t)GPIO_PIN_1)
 #define LED2_PIN                         ((uint32_t)GPIO_PIN_5)
 
 uint32_t GPIO_PIN[] = {LED1_PIN,

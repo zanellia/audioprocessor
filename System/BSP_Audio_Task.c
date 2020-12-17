@@ -1,4 +1,5 @@
 #include "BSP_Audio_Task.h"
+#include "MemoryLogger.h"
 
 #include "BSP_Audio_Buffer_Interface.h"
 #include "AudioProcessor.h"

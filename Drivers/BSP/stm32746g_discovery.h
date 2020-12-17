@@ -60,10 +60,19 @@
 /** @defgroup STM32746G_DISCOVERY_LOW_LEVEL_Exported_Types STM32746G_DISCOVERY_LOW_LEVEL Exported Types
   * @{
   */
+// typedef enum
+//   {
+//     LED1 = 0,
+//     LED_RED = LED1,
+//     LED2 = 1,
+//     LED_GREEN = LED2
+//   } Led_TypeDef;
 typedef enum 
 {
-LED1 = 0,
-LED_GREEN = LED1,
+    LED1 = 0,
+    LED_RED = LED1,
+    LED2 = 0,
+    LED_GREEN = LED2,
 }Led_TypeDef;
 
 typedef enum 

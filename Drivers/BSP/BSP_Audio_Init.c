@@ -3,6 +3,8 @@
 #include "BSP_Audio_Buffer_Interface.h"
 
 #include "stm32f7xx_hal.h"
+#include "stm32746g_discovery.h"
+#include "stm32746g_discovery_audio.h"
 #include "wm8994.h"
 #include "MemoryLogger.h"
 
@@ -28,55 +30,55 @@ static uint8_t volume = 80;
 
 ///////////////////////////////////////////////////////////
 
-#define AUDIO_OUT_SAIx_CLK_ENABLE()              __HAL_RCC_SAI1_CLK_ENABLE()
-#define AUDIO_OUT_SAIx_CLK_DISABLE()             __HAL_RCC_SAI1_CLK_DISABLE()
-#define AUDIO_OUT_SAIx_AF                        GPIO_AF6_SAI1
+// #define AUDIO_OUT_SAIx_CLK_ENABLE()              __HAL_RCC_SAI1_CLK_ENABLE()
+// #define AUDIO_OUT_SAIx_CLK_DISABLE()             __HAL_RCC_SAI1_CLK_DISABLE()
+// #define AUDIO_OUT_SAIx_AF                        GPIO_AF6_SAI1
 
-#define AUDIO_OUT_SAIx_MCLK_ENABLE()             __HAL_RCC_GPIOG_CLK_ENABLE()
-#define AUDIO_OUT_SAIx_MCLK_GPIO_PORT            GPIOG
-#define AUDIO_OUT_SAIx_MCLK_PIN                  GPIO_PIN_7
-#define AUDIO_OUT_SAIx_SD_FS_CLK_ENABLE()        __HAL_RCC_GPIOE_CLK_ENABLE()
-#define AUDIO_OUT_SAIx_SD_FS_SCK_GPIO_PORT       GPIOE
-#define AUDIO_OUT_SAIx_FS_PIN                    GPIO_PIN_4
-#define AUDIO_OUT_SAIx_SCK_PIN                   GPIO_PIN_5
-#define AUDIO_OUT_SAIx_SD_PIN                    GPIO_PIN_6
+// #define AUDIO_OUT_SAIx_MCLK_ENABLE()             __HAL_RCC_GPIOG_CLK_ENABLE()
+// #define AUDIO_OUT_SAIx_MCLK_GPIO_PORT            GPIOG
+// #define AUDIO_OUT_SAIx_MCLK_PIN                  GPIO_PIN_7
+// #define AUDIO_OUT_SAIx_SD_FS_CLK_ENABLE()        __HAL_RCC_GPIOE_CLK_ENABLE()
+// #define AUDIO_OUT_SAIx_SD_FS_SCK_GPIO_PORT       GPIOE
+// #define AUDIO_OUT_SAIx_FS_PIN                    GPIO_PIN_4
+// #define AUDIO_OUT_SAIx_SCK_PIN                   GPIO_PIN_5
+// #define AUDIO_OUT_SAIx_SD_PIN                    GPIO_PIN_6
 
-/* SAI DMA Stream definitions */
-#define AUDIO_OUT_SAIx_DMAx_CLK_ENABLE()         __HAL_RCC_DMA2_CLK_ENABLE()
-#define AUDIO_OUT_SAIx_DMAx_STREAM               DMA2_Stream1
-#define AUDIO_OUT_SAIx_DMAx_CHANNEL              DMA_CHANNEL_0
-#define AUDIO_OUT_SAIx_DMAx_IRQ                  DMA2_Stream1_IRQn
-#define AUDIO_OUT_SAIx_DMAx_PERIPH_DATA_SIZE     DMA_PDATAALIGN_HALFWORD
-#define AUDIO_OUT_SAIx_DMAx_MEM_DATA_SIZE        DMA_MDATAALIGN_HALFWORD
-#define DMA_MAX_SZE                              0xFFFF
+// /* SAI DMA Stream definitions */
+// #define AUDIO_OUT_SAIx_DMAx_CLK_ENABLE()         __HAL_RCC_DMA2_CLK_ENABLE()
+// #define AUDIO_OUT_SAIx_DMAx_STREAM               DMA2_Stream1
+// #define AUDIO_OUT_SAIx_DMAx_CHANNEL              DMA_CHANNEL_0
+// #define AUDIO_OUT_SAIx_DMAx_IRQ                  DMA2_Stream1_IRQn
+// #define AUDIO_OUT_SAIx_DMAx_PERIPH_DATA_SIZE     DMA_PDATAALIGN_HALFWORD
+// #define AUDIO_OUT_SAIx_DMAx_MEM_DATA_SIZE        DMA_MDATAALIGN_HALFWORD
+// #define DMA_MAX_SZE                              0xFFFF
 
-#define AUDIO_OUT_SAIx_DMAx_IRQHandler           DMA2_Stream1_IRQHandler
+// #define AUDIO_OUT_SAIx_DMAx_IRQHandler           DMA2_Stream1_IRQHandler
 
-/* Select the interrupt preemption priority and subpriority for the DMA interrupt */
-#define AUDIO_OUT_IRQ_PREPRIO                    ((uint32_t)0x0E)
-
-
-/* SAI peripheral configuration defines */
-#define AUDIO_IN_SAIx                           SAI1_Block_B
-#define AUDIO_IN_SAIx_CLK_ENABLE()              __HAL_RCC_SAI1_CLK_ENABLE()
-#define AUDIO_IN_SAIx_CLK_DISABLE()             __HAL_RCC_SAI1_CLK_DISABLE()
-#define AUDIO_IN_SAIx_AF                        GPIO_AF6_SAI1
-#define AUDIO_IN_SAIx_SD_ENABLE()               __HAL_RCC_GPIOE_CLK_ENABLE()
-#define AUDIO_IN_SAIx_SD_GPIO_PORT              GPIOE
-#define AUDIO_IN_SAIx_SD_PIN                    GPIO_PIN_3
-
-/* SAI DMA Stream definitions */
-#define AUDIO_IN_SAIx_DMAx_CLK_ENABLE()         __HAL_RCC_DMA2_CLK_ENABLE()
-#define AUDIO_IN_SAIx_DMAx_STREAM               DMA2_Stream4
-#define AUDIO_IN_SAIx_DMAx_CHANNEL              DMA_CHANNEL_1
-#define AUDIO_IN_SAIx_DMAx_IRQ                  DMA2_Stream4_IRQn
-#define AUDIO_IN_SAIx_DMAx_PERIPH_DATA_SIZE     DMA_PDATAALIGN_HALFWORD
-#define AUDIO_IN_SAIx_DMAx_MEM_DATA_SIZE        DMA_MDATAALIGN_HALFWORD
-
-#define AUDIO_IN_IRQ_PREPRIO                ((uint32_t)0x0F)
+// /* Select the interrupt preemption priority and subpriority for the DMA interrupt */
+// #define AUDIO_OUT_IRQ_PREPRIO                    ((uint32_t)0x0E)
 
 
-#define AUDIO_I2C_ADDRESS                ((uint16_t)0x34)
+// /* SAI peripheral configuration defines */
+// #define AUDIO_IN_SAIx                           SAI1_Block_B
+// #define AUDIO_IN_SAIx_CLK_ENABLE()              __HAL_RCC_SAI1_CLK_ENABLE()
+// #define AUDIO_IN_SAIx_CLK_DISABLE()             __HAL_RCC_SAI1_CLK_DISABLE()
+// #define AUDIO_IN_SAIx_AF                        GPIO_AF6_SAI1
+// #define AUDIO_IN_SAIx_SD_ENABLE()               __HAL_RCC_GPIOE_CLK_ENABLE()
+// #define AUDIO_IN_SAIx_SD_GPIO_PORT              GPIOE
+// #define AUDIO_IN_SAIx_SD_PIN                    GPIO_PIN_3
+
+// /* SAI DMA Stream definitions */
+// #define AUDIO_IN_SAIx_DMAx_CLK_ENABLE()         __HAL_RCC_DMA2_CLK_ENABLE()
+// #define AUDIO_IN_SAIx_DMAx_STREAM               DMA2_Stream4
+// #define AUDIO_IN_SAIx_DMAx_CHANNEL              DMA_CHANNEL_1
+// #define AUDIO_IN_SAIx_DMAx_IRQ                  DMA2_Stream4_IRQn
+// #define AUDIO_IN_SAIx_DMAx_PERIPH_DATA_SIZE     DMA_PDATAALIGN_HALFWORD
+// #define AUDIO_IN_SAIx_DMAx_MEM_DATA_SIZE        DMA_MDATAALIGN_HALFWORD
+
+// #define AUDIO_IN_IRQ_PREPRIO                ((uint32_t)0x0F)
+
+
+// #define AUDIO_I2C_ADDRESS                ((uint16_t)0x34)
 
 
 ///////////////////////////////////////////////////////////
@@ -143,31 +145,85 @@ static void My_SAI_ClockConfig(uint32_t AudioFreq)
 
 static void My_AUDIO_OUT_MspInit(void)
 {
+  // static DMA_HandleTypeDef hdma_sai_tx;
+  // GPIO_InitTypeDef  gpio_init_structure;
+
+  // /* Enable SAI clock */
+  // AUDIO_OUT_SAIx_CLK_ENABLE();
+
+  // /* Enable GPIO clock */
+  // AUDIO_OUT_SAIx_MCLK_ENABLE();
+  // AUDIO_OUT_SAIx_SD_FS_CLK_ENABLE();
+
+  // /* CODEC_SAI pins configuration: FS, SCK, MCK and SD pins ------------------*/
+  // gpio_init_structure.Pin = AUDIO_OUT_SAIx_FS_PIN | AUDIO_OUT_SAIx_SCK_PIN | AUDIO_OUT_SAIx_SD_PIN;
+  // gpio_init_structure.Mode = GPIO_MODE_AF_PP;
+  // gpio_init_structure.Pull = GPIO_NOPULL;
+  // gpio_init_structure.Speed = GPIO_SPEED_HIGH;
+  // gpio_init_structure.Alternate = AUDIO_OUT_SAIx_AF;
+  // HAL_GPIO_Init(AUDIO_OUT_SAIx_SD_FS_SCK_GPIO_PORT, &gpio_init_structure);
+
+  // gpio_init_structure.Pin = AUDIO_OUT_SAIx_MCLK_PIN;
+  // HAL_GPIO_Init(AUDIO_OUT_SAIx_MCLK_GPIO_PORT, &gpio_init_structure);
+
+  // /* Enable the DMA clock */
+  // AUDIO_OUT_SAIx_DMAx_CLK_ENABLE();
+
+  // /* Configure the hdma_saiTx handle parameters */
+  // hdma_sai_tx.Init.Channel             = AUDIO_OUT_SAIx_DMAx_CHANNEL;
+  // hdma_sai_tx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
+  // hdma_sai_tx.Init.PeriphInc           = DMA_PINC_DISABLE;
+  // hdma_sai_tx.Init.MemInc              = DMA_MINC_ENABLE;
+  // hdma_sai_tx.Init.PeriphDataAlignment = AUDIO_OUT_SAIx_DMAx_PERIPH_DATA_SIZE;
+  // hdma_sai_tx.Init.MemDataAlignment    = AUDIO_OUT_SAIx_DMAx_MEM_DATA_SIZE;
+  // hdma_sai_tx.Init.Mode                = DMA_CIRCULAR;
+  // hdma_sai_tx.Init.Priority            = DMA_PRIORITY_HIGH;
+  // hdma_sai_tx.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
+  // hdma_sai_tx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
+  // hdma_sai_tx.Init.MemBurst            = DMA_MBURST_SINGLE;
+  // hdma_sai_tx.Init.PeriphBurst         = DMA_PBURST_SINGLE;
+
+  // hdma_sai_tx.Instance = AUDIO_OUT_SAIx_DMAx_STREAM;
+
+  // /* Associate the DMA handle */
+  // __HAL_LINKDMA(&haudio_out_sai, hdmatx, hdma_sai_tx);
+
+  // /* Deinitialize the Stream for new transfer */
+  // HAL_DMA_DeInit(&hdma_sai_tx);
+
+  // /* Configure the DMA Stream */
+  // HAL_DMA_Init(&hdma_sai_tx);
+
+  // /* SAI DMA IRQ Channel configuration */
+  // HAL_NVIC_SetPriority(AUDIO_OUT_SAIx_DMAx_IRQ, AUDIO_OUT_IRQ_PREPRIO, 0);
+  // HAL_NVIC_EnableIRQ(AUDIO_OUT_SAIx_DMAx_IRQ);
+
   static DMA_HandleTypeDef hdma_sai_tx;
-  GPIO_InitTypeDef  gpio_init_structure;
+  GPIO_InitTypeDef  gpio_init_structure;  
 
   /* Enable SAI clock */
   AUDIO_OUT_SAIx_CLK_ENABLE();
-
+  
   /* Enable GPIO clock */
   AUDIO_OUT_SAIx_MCLK_ENABLE();
-  AUDIO_OUT_SAIx_SD_FS_CLK_ENABLE();
-
+  AUDIO_OUT_SAIx_SCK_SD_ENABLE();
+  AUDIO_OUT_SAIx_FS_ENABLE();
   /* CODEC_SAI pins configuration: FS, SCK, MCK and SD pins ------------------*/
+
   gpio_init_structure.Pin = AUDIO_OUT_SAIx_FS_PIN | AUDIO_OUT_SAIx_SCK_PIN | AUDIO_OUT_SAIx_SD_PIN;
   gpio_init_structure.Mode = GPIO_MODE_AF_PP;
   gpio_init_structure.Pull = GPIO_NOPULL;
   gpio_init_structure.Speed = GPIO_SPEED_HIGH;
-  gpio_init_structure.Alternate = AUDIO_OUT_SAIx_AF;
-  HAL_GPIO_Init(AUDIO_OUT_SAIx_SD_FS_SCK_GPIO_PORT, &gpio_init_structure);
+  gpio_init_structure.Alternate = AUDIO_OUT_SAIx_FS_SD_MCLK_AF;
+  HAL_GPIO_Init(AUDIO_OUT_SAIx_FS_GPIO_PORT, &gpio_init_structure);
 
   gpio_init_structure.Pin = AUDIO_OUT_SAIx_MCLK_PIN;
   HAL_GPIO_Init(AUDIO_OUT_SAIx_MCLK_GPIO_PORT, &gpio_init_structure);
 
   /* Enable the DMA clock */
   AUDIO_OUT_SAIx_DMAx_CLK_ENABLE();
-
-  /* Configure the hdma_saiTx handle parameters */
+    
+  /* Configure the hdma_saiTx handle parameters */   
   hdma_sai_tx.Init.Channel             = AUDIO_OUT_SAIx_DMAx_CHANNEL;
   hdma_sai_tx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
   hdma_sai_tx.Init.PeriphInc           = DMA_PINC_DISABLE;
@@ -176,25 +232,26 @@ static void My_AUDIO_OUT_MspInit(void)
   hdma_sai_tx.Init.MemDataAlignment    = AUDIO_OUT_SAIx_DMAx_MEM_DATA_SIZE;
   hdma_sai_tx.Init.Mode                = DMA_CIRCULAR;
   hdma_sai_tx.Init.Priority            = DMA_PRIORITY_HIGH;
-  hdma_sai_tx.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
+  hdma_sai_tx.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;         
   hdma_sai_tx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
   hdma_sai_tx.Init.MemBurst            = DMA_MBURST_SINGLE;
-  hdma_sai_tx.Init.PeriphBurst         = DMA_PBURST_SINGLE;
-
+  hdma_sai_tx.Init.PeriphBurst         = DMA_PBURST_SINGLE; 
+  
   hdma_sai_tx.Instance = AUDIO_OUT_SAIx_DMAx_STREAM;
-
+  
   /* Associate the DMA handle */
-  __HAL_LINKDMA(&haudio_out_sai, hdmatx, hdma_sai_tx);
 
+  __HAL_LINKDMA(&haudio_out_sai, hdmatx, hdma_sai_tx);
+  
   /* Deinitialize the Stream for new transfer */
   HAL_DMA_DeInit(&hdma_sai_tx);
-
+  
   /* Configure the DMA Stream */
-  HAL_DMA_Init(&hdma_sai_tx);
-
+  HAL_DMA_Init(&hdma_sai_tx);      
+  
   /* SAI DMA IRQ Channel configuration */
   HAL_NVIC_SetPriority(AUDIO_OUT_SAIx_DMAx_IRQ, AUDIO_OUT_IRQ_PREPRIO, 0);
-  HAL_NVIC_EnableIRQ(AUDIO_OUT_SAIx_DMAx_IRQ);
+  HAL_NVIC_EnableIRQ(AUDIO_OUT_SAIx_DMAx_IRQ); 
 }
 
 static void My_SAI_Out_Init(uint32_t AudioFreq)
@@ -265,7 +322,7 @@ static void My_AUDIO_IN_MspInit(void)
     gpio_init_structure.Mode = GPIO_MODE_AF_PP;
     gpio_init_structure.Pull = GPIO_NOPULL;
     gpio_init_structure.Speed = GPIO_SPEED_FAST;
-    gpio_init_structure.Alternate = AUDIO_IN_SAIx_AF;
+    gpio_init_structure.Alternate = AUDIO_IN_SAIx_SD_AF;
     HAL_GPIO_Init(AUDIO_IN_SAIx_SD_GPIO_PORT, &gpio_init_structure);
 
     /* Enable the DMA clock */
@@ -304,47 +361,143 @@ static void My_AUDIO_IN_MspInit(void)
 
 static void My_SAI_In_Init(uint32_t AudioFreq)
 {
-    /* Initialize SAI1 block B in SLAVE RX synchronous from SAI1 block A */
-    /* Initialize the haudio_in_sai Instance parameter */
-    haudio_in_sai.Instance = AUDIO_IN_SAIx;
+    // /* Initialize SAI1 block B in SLAVE RX synchronous from SAI1 block A */
+    // /* Initialize the haudio_in_sai Instance parameter */
+    // haudio_in_sai.Instance = AUDIO_IN_SAIx;
 
-    /* Disable SAI peripheral to allow access to SAI internal registers */
-    __HAL_SAI_DISABLE(&haudio_in_sai);
+    // /* Disable SAI peripheral to allow access to SAI internal registers */
+    // __HAL_SAI_DISABLE(&haudio_in_sai);
 
-    /* Configure SAI_Block_x */
-    haudio_in_sai.Init.MonoStereoMode = SAI_STEREOMODE;
-    haudio_in_sai.Init.AudioFrequency = AudioFreq;
-    haudio_in_sai.Init.AudioMode      = SAI_MODESLAVE_RX;
-    haudio_in_sai.Init.NoDivider      = SAI_MASTERDIVIDER_ENABLE;
-    haudio_in_sai.Init.Protocol       = SAI_FREE_PROTOCOL;
-    haudio_in_sai.Init.DataSize       = SAI_DATASIZE_16;
-    haudio_in_sai.Init.FirstBit       = SAI_FIRSTBIT_MSB;
-    haudio_in_sai.Init.ClockStrobing  = SAI_CLOCKSTROBING_FALLINGEDGE;
-    haudio_in_sai.Init.Synchro        = SAI_SYNCHRONOUS;
-    haudio_in_sai.Init.OutputDrive    = SAI_OUTPUTDRIVE_DISABLE;
-    haudio_in_sai.Init.FIFOThreshold  = SAI_FIFOTHRESHOLD_1QF;
-    haudio_in_sai.Init.SynchroExt     = SAI_SYNCEXT_DISABLE;
-    haudio_in_sai.Init.CompandingMode = SAI_NOCOMPANDING;
-    haudio_in_sai.Init.TriState       = SAI_OUTPUT_RELEASED;
-    haudio_in_sai.Init.Mckdiv         = 0;
+    // /* Configure SAI_Block_x */
+    // haudio_in_sai.Init.MonoStereoMode = SAI_STEREOMODE;
+    // haudio_in_sai.Init.AudioFrequency = AudioFreq;
+    // haudio_in_sai.Init.AudioMode      = SAI_MODESLAVE_RX;
+    // haudio_in_sai.Init.NoDivider      = SAI_MASTERDIVIDER_ENABLE;
+    // haudio_in_sai.Init.Protocol       = SAI_FREE_PROTOCOL;
+    // haudio_in_sai.Init.DataSize       = SAI_DATASIZE_16;
+    // haudio_in_sai.Init.FirstBit       = SAI_FIRSTBIT_MSB;
+    // haudio_in_sai.Init.ClockStrobing  = SAI_CLOCKSTROBING_FALLINGEDGE;
+    // haudio_in_sai.Init.Synchro        = SAI_SYNCHRONOUS;
+    // haudio_in_sai.Init.OutputDrive    = SAI_OUTPUTDRIVE_DISABLE;
+    // haudio_in_sai.Init.FIFOThreshold  = SAI_FIFOTHRESHOLD_1QF;
+    // haudio_in_sai.Init.SynchroExt     = SAI_SYNCEXT_DISABLE;
+    // haudio_in_sai.Init.CompandingMode = SAI_NOCOMPANDING;
+    // haudio_in_sai.Init.TriState       = SAI_OUTPUT_RELEASED;
+    // haudio_in_sai.Init.Mckdiv         = 0;
 
-    /* Configure SAI_Block_x Frame */
-    haudio_in_sai.FrameInit.FrameLength       = 64;
-    haudio_in_sai.FrameInit.ActiveFrameLength = 32;
-    haudio_in_sai.FrameInit.FSDefinition      = SAI_FS_CHANNEL_IDENTIFICATION;
-    haudio_in_sai.FrameInit.FSPolarity        = SAI_FS_ACTIVE_LOW;
-    haudio_in_sai.FrameInit.FSOffset          = SAI_FS_BEFOREFIRSTBIT;
+    // /* Configure SAI_Block_x Frame */
+    // haudio_in_sai.FrameInit.FrameLength       = 64;
+    // haudio_in_sai.FrameInit.ActiveFrameLength = 32;
+    // haudio_in_sai.FrameInit.FSDefinition      = SAI_FS_CHANNEL_IDENTIFICATION;
+    // haudio_in_sai.FrameInit.FSPolarity        = SAI_FS_ACTIVE_LOW;
+    // haudio_in_sai.FrameInit.FSOffset          = SAI_FS_BEFOREFIRSTBIT;
 
-    /* Configure SAI Block_x Slot */
-    haudio_in_sai.SlotInit.FirstBitOffset = 0;
-    haudio_in_sai.SlotInit.SlotSize       = SAI_SLOTSIZE_DATASIZE;
-    haudio_in_sai.SlotInit.SlotNumber     = 4;
-    haudio_in_sai.SlotInit.SlotActive     = 0xF;
+    // /* Configure SAI Block_x Slot */
+    // haudio_in_sai.SlotInit.FirstBitOffset = 0;
+    // haudio_in_sai.SlotInit.SlotSize       = SAI_SLOTSIZE_DATASIZE;
+    // haudio_in_sai.SlotInit.SlotNumber     = 4;
+    // haudio_in_sai.SlotInit.SlotActive     = 0xF;
 
-    HAL_SAI_Init(&haudio_in_sai);
+    // HAL_SAI_Init(&haudio_in_sai);
 
-    /* Enable SAI peripheral */
-    __HAL_SAI_ENABLE(&haudio_in_sai);
+    // /* Enable SAI peripheral */
+    // __HAL_SAI_ENABLE(&haudio_in_sai);
+
+  /* Initialize SAI2 block A in MASTER RX */
+  /* Initialize the haudio_out_sai Instance parameter */
+  haudio_out_sai.Instance = AUDIO_OUT_SAIx;
+
+  /* Disable SAI peripheral to allow access to SAI internal registers */
+  __HAL_SAI_DISABLE(&haudio_out_sai);
+
+  /* Configure SAI_Block_x
+  LSBFirst: Disabled
+  DataSize: 16 */
+  haudio_out_sai.Init.AudioFrequency = AudioFreq;
+  haudio_out_sai.Init.AudioMode = SAI_MODESLAVE_RX;
+  haudio_out_sai.Init.NoDivider = SAI_MASTERDIVIDER_ENABLED;
+  haudio_out_sai.Init.Protocol = SAI_FREE_PROTOCOL;
+  haudio_out_sai.Init.DataSize = SAI_DATASIZE_16;
+  haudio_out_sai.Init.FirstBit = SAI_FIRSTBIT_MSB;
+  haudio_out_sai.Init.ClockStrobing = SAI_CLOCKSTROBING_RISINGEDGE;
+  haudio_out_sai.Init.Synchro = SAI_ASYNCHRONOUS;
+  haudio_out_sai.Init.OutputDrive = SAI_OUTPUTDRIVE_ENABLED;
+  haudio_out_sai.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_1QF;
+
+  /* Configure SAI_Block_x Frame
+  Frame Length: 64
+  Frame active Length: 32
+  FS Definition: Start frame + Channel Side identification
+  FS Polarity: FS active Low
+  FS Offset: FS asserted one bit before the first bit of slot 0 */
+  haudio_out_sai.FrameInit.FrameLength = 64;
+  haudio_out_sai.FrameInit.ActiveFrameLength = 32;
+  haudio_out_sai.FrameInit.FSDefinition = SAI_FS_CHANNEL_IDENTIFICATION;
+  haudio_out_sai.FrameInit.FSPolarity = SAI_FS_ACTIVE_LOW;
+  haudio_out_sai.FrameInit.FSOffset = SAI_FS_BEFOREFIRSTBIT;
+
+  /* Configure SAI Block_x Slot
+  Slot First Bit Offset: 0
+  Slot Size  : 16
+  Slot Number: 4
+  Slot Active: All slot actives */
+  haudio_out_sai.SlotInit.FirstBitOffset = 0;
+  haudio_out_sai.SlotInit.SlotSize = SAI_SLOTSIZE_DATASIZE;
+  haudio_out_sai.SlotInit.SlotNumber = 4;
+  haudio_out_sai.SlotInit.SlotActive = 0xF;
+
+  HAL_SAI_Init(&haudio_out_sai);
+
+  /* Initialize SAI2 block B in SLAVE RX synchronous from SAI2 block A */
+  /* Initialize the haudio_in_sai Instance parameter */
+  haudio_in_sai.Instance = AUDIO_IN_SAIx;
+  
+  /* Disable SAI peripheral to allow access to SAI internal registers */
+  __HAL_SAI_DISABLE(&haudio_in_sai);
+  
+  /* Configure SAI_Block_x
+  LSBFirst: Disabled
+  DataSize: 16 */
+  haudio_in_sai.Init.AudioFrequency = AudioFreq;
+  haudio_in_sai.Init.AudioMode = SAI_MODESLAVE_RX;
+  haudio_in_sai.Init.NoDivider = SAI_MASTERDIVIDER_ENABLED;
+  haudio_in_sai.Init.Protocol = SAI_FREE_PROTOCOL;
+  haudio_in_sai.Init.DataSize = SAI_DATASIZE_16;
+  haudio_in_sai.Init.FirstBit = SAI_FIRSTBIT_MSB;
+  haudio_in_sai.Init.ClockStrobing = SAI_CLOCKSTROBING_RISINGEDGE;
+  haudio_in_sai.Init.Synchro = SAI_SYNCHRONOUS;
+  haudio_in_sai.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLED;
+  haudio_in_sai.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_1QF;
+  
+  /* Configure SAI_Block_x Frame
+  Frame Length: 64
+  Frame active Length: 32
+  FS Definition: Start frame + Channel Side identification
+  FS Polarity: FS active Low
+  FS Offset: FS asserted one bit before the first bit of slot 0 */
+  haudio_in_sai.FrameInit.FrameLength = 64;
+  haudio_in_sai.FrameInit.ActiveFrameLength = 32;
+  haudio_in_sai.FrameInit.FSDefinition = SAI_FS_CHANNEL_IDENTIFICATION;
+  haudio_in_sai.FrameInit.FSPolarity = SAI_FS_ACTIVE_LOW;
+  haudio_in_sai.FrameInit.FSOffset = SAI_FS_BEFOREFIRSTBIT;
+  
+  /* Configure SAI Block_x Slot
+  Slot First Bit Offset: 0
+  Slot Size  : 16
+  Slot Number: 4
+  Slot Active: All slot active */
+  haudio_in_sai.SlotInit.FirstBitOffset = 0;
+  haudio_in_sai.SlotInit.SlotSize = SAI_SLOTSIZE_DATASIZE;
+  haudio_in_sai.SlotInit.SlotNumber = 4;
+  haudio_in_sai.SlotInit.SlotActive = 0xF;
+
+  HAL_SAI_Init(&haudio_in_sai);
+
+  /* Enable SAI peripheral to generate MCLK */
+  __HAL_SAI_ENABLE(&haudio_out_sai);
+
+  /* Enable SAI peripheral */
+  __HAL_SAI_ENABLE(&haudio_in_sai);
 }
 
 ////////////////////////////////////////////////////////////////

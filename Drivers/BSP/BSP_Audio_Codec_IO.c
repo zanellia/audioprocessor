@@ -144,8 +144,11 @@ static void I2Cx_MspInit(I2C_HandleTypeDef *i2c_handler)
 
   /*** Configure the GPIOs ***/
   /* Enable GPIO clock */
-  DISCOVERY_AUDIO_I2Cx_SCL_GPIO_CLK_ENABLE();
-  DISCOVERY_AUDIO_I2Cx_SDA_GPIO_CLK_ENABLE();
+
+  DISCOVERY_AUDIO_I2Cx_SCL_SDA_GPIO_CLK_ENABLE();
+  // DISCOVERY_AUDIO_I2Cx_SCL_GPIO_CLK_ENABLE();
+  // DISCOVERY_AUDIO_I2Cx_SDA_GPIO_CLK_ENABLE();
+  
   // /* Configure I2C Tx as alternate function */
   // gpio_init_structure.Pin = DISCOVERY_AUDIO_I2Cx_SCL_PIN;
   // gpio_init_structure.Mode = GPIO_MODE_AF_OD;
