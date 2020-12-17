@@ -19,7 +19,7 @@ set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 set(SOURCE_ROOT_DIR "../")
 
 set(C_SOURCES_FOR_TESTING
-  "${SOURCE_ROOT_DIR}/Application/MIDIMessageHandler.cpp"
+  # "${SOURCE_ROOT_DIR}/Application/MIDIMessageHandler.cpp"
   "${SOURCE_ROOT_DIR}/Help/MemoryLogger.c"
   "${SOURCE_ROOT_DIR}/Help/tinyprintf.c"
   "${SOURCE_ROOT_DIR}/Application/ProcessBlocks/ClippingDistortionBlock/ClippingDistortionBlock.cpp"
@@ -34,7 +34,7 @@ set(C_SOURCES_NOT_TESTED
 set(C_SOURCES_SYSTEM
     "${SOURCE_ROOT_DIR}/System/main.c"
     "${SOURCE_ROOT_DIR}/System/BSP_Audio_Task.c"
-    "${SOURCE_ROOT_DIR}/System/BSP_LCD_Task.c"
+    # "${SOURCE_ROOT_DIR}/System/BSP_LCD_Task.c"
     # "${SOURCE_ROOT_DIR}/System/MIDI_Input_Task.c"
     "${SOURCE_ROOT_DIR}/System/Monitor_Task.c"
     "${SOURCE_ROOT_DIR}/System/SerialLogger_Task.c"
@@ -53,23 +53,21 @@ set(C_SOURCES_HAL_BSP
   "${SOURCE_ROOT_DIR}/Drivers/STM32F7xx_HAL_Drivers/Src/stm32f7xx_hal_pwr_ex.c"
   "${SOURCE_ROOT_DIR}/Drivers/STM32F7xx_HAL_Drivers/Src/stm32f7xx_hal_sai.c"
   "${SOURCE_ROOT_DIR}/Drivers/STM32F7xx_HAL_Drivers/Src/stm32f7xx_hal_dma.c"
-  "${SOURCE_ROOT_DIR}/Drivers/STM32F7xx_HAL_Drivers/Src/stm32f7xx_hal_dma2d.c"
+  # "${SOURCE_ROOT_DIR}/Drivers/STM32F7xx_HAL_Drivers/Src/stm32f7xx_hal_dma2d.c"
   "${SOURCE_ROOT_DIR}/Drivers/STM32F7xx_HAL_Drivers/Src/stm32f7xx_hal_i2c.c"
   "${SOURCE_ROOT_DIR}/Drivers/STM32F7xx_HAL_Drivers/Src/stm32f7xx_hal_uart.c"
-  "${SOURCE_ROOT_DIR}/Drivers/STM32F7xx_HAL_Drivers/Src/stm32f7xx_hal_ltdc.c"
-  "${SOURCE_ROOT_DIR}/Drivers/STM32F7xx_HAL_Drivers/Src/stm32f7xx_hal_sdram.c"
-  "${SOURCE_ROOT_DIR}/Drivers/STM32F7xx_HAL_Drivers/Src/stm32f7xx_ll_fmc.c"
-
+  # "${SOURCE_ROOT_DIR}/Drivers/STM32F7xx_HAL_Drivers/Src/stm32f7xx_hal_ltdc.c"
+  # "${SOURCE_ROOT_DIR}/Drivers/STM32F7xx_HAL_Drivers/Src/stm32f7xx_hal_sdram.c"
+  # "${SOURCE_ROOT_DIR}/Drivers/STM32F7xx_HAL_Drivers/Src/stm32f7xx_ll_fmc.c"
   "${SOURCE_ROOT_DIR}/Drivers/BSP/BSP_Audio_Init.c"
   "${SOURCE_ROOT_DIR}/Drivers/BSP/BSP_Bringup.c"
-  "${SOURCE_ROOT_DIR}/Drivers/BSP/BSP_UART.c"
-  "${SOURCE_ROOT_DIR}/Drivers/BSP/BSP_Fast_UART.c"
+  # "${SOURCE_ROOT_DIR}/Drivers/BSP/BSP_UART.c"
+  # "${SOURCE_ROOT_DIR}/Drivers/BSP/BSP_Fast_UART.c"
   "${SOURCE_ROOT_DIR}/Drivers/BSP/BSP_LED.c"
   "${SOURCE_ROOT_DIR}/Drivers/BSP/BSP_Audio_Codec_IO.c"
-  "${SOURCE_ROOT_DIR}/Drivers/BSP/BSP_Audio_Codec_IO.c"
   "${SOURCE_ROOT_DIR}/Drivers/BSP/wm8994.c"
-  "${SOURCE_ROOT_DIR}/Drivers/BSP/stm32746g_discovery_lcd.c"
-  "${SOURCE_ROOT_DIR}/Drivers/BSP/stm32746g_discovery_sdram.c"
+  # "${SOURCE_ROOT_DIR}/Drivers/BSP/stm32746g_discovery_lcd.c"
+  # "${SOURCE_ROOT_DIR}/Drivers/BSP/stm32746g_discovery_sdram.c"
 
   "${SOURCE_ROOT_DIR}/FreeRTOS/portable/GCC/ARM_CM7/r0p1/port.c"
   "${SOURCE_ROOT_DIR}/FreeRTOS/tasks.c"
@@ -84,7 +82,7 @@ set(C_SOURCES_HAL_BSP
 SET(C_SOURCES "")
 LIST(APPEND C_SOURCES ${C_SOURCES_FOR_TESTING})
 LIST(APPEND C_SOURCES ${C_SOURCES_HAL_BSP})
-LIST(APPEND C_SOURCES ${C_SOURCES_NOT_TESTED})
+# LIST(APPEND C_SOURCES ${C_SOURCES_NOT_TESTED})
 LIST(APPEND C_SOURCES ${C_SOURCES_SYSTEM})
 
 ########################################

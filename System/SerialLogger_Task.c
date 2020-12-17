@@ -9,7 +9,7 @@
 #include "semphr.h"
 
 #include "tinyprintf.h"
-#include "BSP_Fast_UART.h"
+// #include "BSP_Fast_UART.h"
 
 typedef struct {
   LogType_t type;
@@ -45,8 +45,8 @@ void SerialLogger_Signal(){
 void SerialLogger_Task(void * params)
 {
   (void)params;
-  BSP_Fast_UART_Init();
-  _send_hello_message();
+  // BSP_Fast_UART_Init();
+  // _send_hello_message();
 
   vSemaphoreCreateBinary(signalSemaphore );
   xQueue_SerialLoggerMessages = xQueueCreate(32, sizeof(SerialLoggerMessage_t));
@@ -70,11 +70,11 @@ void SerialLogger_Task(void * params)
 
     }
 
-    BSP_Fast_UART_Transmit_Bytes_NonBlocking(bulkTransmitBuffer, index);
+    // BSP_Fast_UART_Transmit_Bytes_NonBlocking(bulkTransmitBuffer, index);
   }
 }
 
-static void _send_hello_message(void){
-  static uint8_t txbuf[] = "Serial Logger Task Ready\n";
-  BSP_Fast_UART_Transmit_Bytes_Blocking(txbuf, sizeof(txbuf));
-}
+// static void _send_hello_message(void){
+//   static uint8_t txbuf[] = "Serial Logger Task Ready\n";
+//   BSP_Fast_UART_Transmit_Bytes_Blocking(txbuf, sizeof(txbuf));
+// }

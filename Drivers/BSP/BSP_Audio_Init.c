@@ -85,8 +85,8 @@ static uint8_t volume = 80;
 
 void My_BSP_Audio_Init(void)
 {
-  haudio_out_sai.Instance = SAI1_Block_A;
-  haudio_in_sai.Instance = SAI1_Block_B;
+  haudio_out_sai.Instance = SAI2_Block_A;
+  haudio_in_sai.Instance = SAI2_Block_B;
 
   RUN_AND_LOG( My_SAI_ClockConfig(frequency); );
 

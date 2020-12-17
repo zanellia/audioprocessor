@@ -1,5 +1,5 @@
 #include "MemoryLogger.h"
-#include "BSP_Bringup.h"
+#include "BSP_LED.h"
 #include "BSP_Audio_Task.h"
 #include "BSP_LCD_Task.h"
 #include "MIDI_Input_Task.h"
@@ -53,43 +53,9 @@ led_off(void)
 }
 
 
-static void
-setup_led(void)
-{
-  GPIO_InitTypeDef gpioInitStructure;
-
-  __HAL_RCC_GPIOI_CLK_ENABLE();
-  gpioInitStructure.Pin = GPIO_PIN_1;
-  gpioInitStructure.Mode = GPIO_MODE_OUTPUT_PP;
-  gpioInitStructure.Pull = GPIO_PULLUP;
-  gpioInitStructure.Speed = GPIO_SPEED_HIGH;
-  HAL_GPIO_Init(GPIOI, &gpioInitStructure);
-  led_off();
-}
-
-static void blink() 
-{
-
-  // for(int i = 0; i < 100; i++)
-  int i = 0;
-  for(;;)
-  {
-    if (i % 2)
-      led_off();
-    else
-      led_on();
-
-    for (int j = 0; j < 1000000; j++)
-      __asm volatile("nop");
-    ++i;
-  }
-}
-
 #if 1
 int main(void)
 {
-  setup_led();
-  blink();
   MPU_Config();
   SCB_InvalidateICache();
 
@@ -109,15 +75,16 @@ int main(void)
   - Set NVIC Group Priority to 4
   - Global MSP (MCU Support Package) initialization
   */
-  HAL_Init();
 
   // DO NOT ADD CODE WITH DELAYS BETWEEN HAL_Init() AND STARTING THE SCHEDULER!!!!!
   // YOU HAVE 1 MILLISECOND TO START THE SCHEDULER OR THE PROGRAM WILL CRASH
 
+  HAL_Init();
+  // TODO(andrea): can't figure out why this generates a hard fault 
   SystemClock_Config();/* Configure the system clock @ 200 Mhz */
 
-
-  My_BSP_Bringup();
+  BSP_LED_Init();
+  // blink();
 
   int myStackSize = 1024;
 
@@ -128,33 +95,33 @@ int main(void)
   // Create this task first because other tasks send messages
   // Remember not to send messages in constructors because the message queue won't be created yet
 
-  // xTaskCreate(SerialLogger_Task,
-  //             "Serial Logger Task",
-  //             myStackSize,
-  //             NULL, //task params
-  //             2, //priority
-  //             NULL ); //task handle
+  xTaskCreate(SerialLogger_Task,
+              "Serial Logger Task",
+              myStackSize,
+              NULL, //task params
+              2, //priority
+              NULL ); //task handle
 
-  // xTaskCreate(Monitor_Task,
-  //             "Monitor Task",
-  //             myStackSize,
-  //             NULL, //task params
-  //             1, //priority
-  //             NULL ); //task handle
+  xTaskCreate(Monitor_Task,
+              "Monitor Task",
+              myStackSize,
+              NULL, //task params
+              1, //priority
+              NULL ); //task handle
 
-  // xTaskCreate(My_Audio_Task,
-  //             "My Audio Task",
-  //             myStackSize,
-  //             NULL, //task params
-  //             8,  //priority
-  //             NULL ); //task handle
-
-  xTaskCreate(My_LCD_Task,
-              "My LCD Task",
+  xTaskCreate(My_Audio_Task,
+              "My Audio Task",
               myStackSize,
               NULL, //task params
               8,  //priority
               NULL ); //task handle
+
+  // xTaskCreate(My_LCD_Task,
+  //             "My LCD Task",
+  //             myStackSize,
+  //             NULL, //task params
+  //             8,  //priority
+  //             NULL ); //task handle
 
   // xTaskCreate(MIDI_Input_Task,
   //             "MIDI Input Task",
@@ -165,6 +132,8 @@ int main(void)
 
 
 
+  // setup_led();
+  // blink();
   vTaskStartScheduler();
 
   /* We should never get here as control is now taken by the scheduler */
@@ -181,41 +150,41 @@ int main(void)
 #define LTDC_ACTIVE_LAYER	     ((uint32_t)1) /* Layer 1 */
 
 
-static void Display_Description(void)
-{
-  uint8_t desc[50];
+// static void Display_Description(void)
+// {
+//   uint8_t desc[50];
 
-  /* Set LCD Foreground Layer  */
-  BSP_LCD_SelectLayer(LTDC_ACTIVE_LAYER);
+//   /* Set LCD Foreground Layer  */
+//   BSP_LCD_SelectLayer(LTDC_ACTIVE_LAYER);
 
-  BSP_LCD_SetFont(&LCD_DEFAULT_FONT);
+//   BSP_LCD_SetFont(&LCD_DEFAULT_FONT);
 
-  /* Clear the LCD */
-  BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
-  BSP_LCD_Clear(LCD_COLOR_WHITE);
+//   /* Clear the LCD */
+//   BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
+//   BSP_LCD_Clear(LCD_COLOR_WHITE);
 
-  /* Set the LCD Text Color */
-  BSP_LCD_SetTextColor(LCD_COLOR_DARKBLUE);
+//   /* Set the LCD Text Color */
+//   BSP_LCD_SetTextColor(LCD_COLOR_DARKBLUE);
 
-  /* Display LCD messages */
-  BSP_LCD_DisplayStringAt(0, 10, (uint8_t *)"STM32F746G BSP", CENTER_MODE);
-  BSP_LCD_DisplayStringAt(0, 35, (uint8_t *)"Drivers examples", CENTER_MODE);
+//   /* Display LCD messages */
+//   BSP_LCD_DisplayStringAt(0, 10, (uint8_t *)"STM32F746G BSP", CENTER_MODE);
+//   BSP_LCD_DisplayStringAt(0, 35, (uint8_t *)"Drivers examples", CENTER_MODE);
 
-  /* Draw Bitmap */
-  // BSP_LCD_DrawBitmap((BSP_LCD_GetXSize() - 80) / 2, 65, (uint8_t *)stlogo);
+//   /* Draw Bitmap */
+//   // BSP_LCD_DrawBitmap((BSP_LCD_GetXSize() - 80) / 2, 65, (uint8_t *)stlogo);
 
-  BSP_LCD_SetFont(&Font12);
-  BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() - 20, (uint8_t *)"Copyright (c) STMicroelectronics 2015", CENTER_MODE);
+//   BSP_LCD_SetFont(&Font12);
+//   BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() - 20, (uint8_t *)"Copyright (c) STMicroelectronics 2015", CENTER_MODE);
 
-  BSP_LCD_SetFont(&Font16);
-  BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
-  BSP_LCD_FillRect(0, BSP_LCD_GetYSize() / 2 + 15, BSP_LCD_GetXSize(), 60);
-  BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
-  BSP_LCD_SetBackColor(LCD_COLOR_BLUE);
-  BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() / 2 + 30, (uint8_t *)"Press User Button to start :", CENTER_MODE);
-  sprintf((char *)desc, "%s AUDIO RECORD");
-  BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() / 2 + 45, (uint8_t *)desc, CENTER_MODE);
-}
+//   BSP_LCD_SetFont(&Font16);
+//   BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
+//   BSP_LCD_FillRect(0, BSP_LCD_GetYSize() / 2 + 15, BSP_LCD_GetXSize(), 60);
+//   BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+//   BSP_LCD_SetBackColor(LCD_COLOR_BLUE);
+//   BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() / 2 + 30, (uint8_t *)"Press User Button to start :", CENTER_MODE);
+//   sprintf((char *)desc, "%s AUDIO RECORD");
+//   BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() / 2 + 45, (uint8_t *)desc, CENTER_MODE);
+// }
 
 int main()
 {
@@ -232,9 +201,9 @@ int main()
        - Set NVIC Group Priority to 4
        - Global MSP (MCU Support Package) initialization
      */
-  HAL_Init();
   setup_led();
   blink();
+  HAL_Init();
   /* Configure the system clock to 200 Mhz */
   SystemClock_Config();
 
@@ -249,21 +218,22 @@ int main()
   ASSERT(lcd_status != LCD_OK);
 
   /* Initialize the LCD Layers */
-  BSP_LCD_LayerDefaultInit(LTDC_ACTIVE_LAYER, LCD_FRAME_BUFFER);
+  // BSP_LCD_LayerDefaultInit(LTDC_ACTIVE_LAYER, LCD_FRAME_BUFFER);
 
 
-  Display_Description();
+  // Display_Description();
 
 
   /* Wait For User inputs */
   while (1)
   {
     HAL_Delay(100);
-    Display_Description();
+    // Display_Description();
   }
 }
 #endif
 
+#if 1
 void vApplicationStackOverflowHook( TaskHandle_t xTask, char *pcTaskName )
 {
   (void)xTask;
@@ -286,6 +256,7 @@ void EndIdleMonitor (void)
 {
 }
 
+#endif
 
 
 
@@ -337,22 +308,31 @@ static void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 8;
   ret = HAL_RCC_OscConfig(&RCC_OscInitStruct);
-  ASSERT(ret != HAL_OK);
+  if(ret != HAL_OK)
+  {
+    while(1) { ; }
+  }
 
   /* activate the OverDrive */
   ret = HAL_PWREx_ActivateOverDrive();
-  ASSERT(ret != HAL_OK);
+  if(ret != HAL_OK)
+  {
+    while(1) { ; }
+  }
 
   /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
      clocks dividers */
   RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+  // RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  // RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  // RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  // RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  ret = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5);
-  ASSERT(ret != HAL_OK);
+  // ret = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5);
+  if(ret != HAL_OK)
+  {
+    while(1) { ; }
+  }
 }
 
 

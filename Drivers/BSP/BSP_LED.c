@@ -17,25 +17,23 @@ GPIO_TypeDef* GPIO_PORT[] = {LED1_GPIO_PORT,
 
 #define LEDx_GPIO_CLK_ENABLE()           __HAL_RCC_GPIOJ_CLK_ENABLE()
 
-
-
-void BSP_LED_Init(Led_TypeDef Led)
+void BSP_LED_Init()
 {
-  GPIO_InitTypeDef  gpio_init_structure;
 
-  LEDx_GPIO_CLK_ENABLE();
-  /* Configure the GPIO_LED pin */
-  gpio_init_structure.Pin   = GPIO_PIN[Led];
-  gpio_init_structure.Mode  = GPIO_MODE_OUTPUT_PP;
-  gpio_init_structure.Pull  = GPIO_PULLUP;
-  gpio_init_structure.Speed = GPIO_SPEED_HIGH;
+  GPIO_InitTypeDef gpioInitStructure;
 
-  HAL_GPIO_Init(GPIO_PORT[Led], &gpio_init_structure);
+  __HAL_RCC_GPIOI_CLK_ENABLE();
+  gpioInitStructure.Pin = GPIO_PIN_1;
+  gpioInitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+  gpioInitStructure.Pull = GPIO_PULLUP;
+  gpioInitStructure.Speed = GPIO_SPEED_HIGH;
+  HAL_GPIO_Init(GPIOI, &gpioInitStructure);
 
 }
-void BSP_LED_On(Led_TypeDef Led)
+
+void BSP_LED_On()
 {
-  HAL_GPIO_WritePin(GPIO_PORT[Led], GPIO_PIN[Led], GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOI, GPIO_PIN_1, GPIO_PIN_SET);
 }
 
 /**
@@ -46,9 +44,9 @@ void BSP_LED_On(Led_TypeDef Led)
  *            @arg  LED2
  * @retval None
  */
-void BSP_LED_Off(Led_TypeDef Led)
+void BSP_LED_Off()
 {
-  HAL_GPIO_WritePin(GPIO_PORT[Led], GPIO_PIN[Led], GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOI, GPIO_PIN_1, GPIO_PIN_RESET);
 }
 
 /**
@@ -59,7 +57,22 @@ void BSP_LED_Off(Led_TypeDef Led)
  *            @arg  LED2
  * @retval None
  */
-void BSP_LED_Toggle(Led_TypeDef Led)
+void BSP_LED_Toggle()
 {
-  HAL_GPIO_TogglePin(GPIO_PORT[Led], GPIO_PIN[Led]);
+  HAL_GPIO_TogglePin(GPIOI, GPIO_PIN_1);
 }
+
+void BSP_LED_Blink() 
+{
+  int i;
+  for(i=0; i<4; i++)
+  {
+    if (i % 2)
+      BSP_LED_Off();
+    else
+      BSP_LED_On();
+    for (int j = 0; j < 100000; j++)
+      __asm volatile("nop");
+  }
+}
+

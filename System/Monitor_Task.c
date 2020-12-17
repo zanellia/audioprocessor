@@ -7,6 +7,7 @@
 #include "tinyprintf.h"
 #include "string.h"
 
+#if 1
 static void sendIdleTickCountMessage(void);
 static void sendEdgeListMessage(void);
 static void sendFFTSpectrumMessage(void);
@@ -15,11 +16,13 @@ static void sendFFTSpectrumMessage(void);
 static int timeToSendMessage(void);
 
 volatile int idleTickCountOfLastCycle;
+#endif
 volatile int monitorTickCount;
 volatile int monitoringActive;
 volatile int globalTickCount = 0;
 volatile int ticksSinceLastMessage;
 
+#if 1
 void Monitor_ResetTickCount(void)
 {
   idleTickCountOfLastCycle = monitorTickCount;
@@ -29,7 +32,9 @@ void Monitor_ResetTickCount(void)
   monitorTickCount = 0;
 }
 
+#endif
 int idleHookReached = 0;
+#if 1
 
 void Monitor_Task(void * argument)
 {
@@ -44,8 +49,8 @@ void Monitor_Task(void * argument)
 
     if(timeToSendMessage()){
       sendIdleTickCountMessage();
-      sendEdgeListMessage();
-      sendFFTSpectrumMessage();
+      // sendEdgeListMessage();
+      // sendFFTSpectrumMessage();
     }
   }
 }
@@ -66,19 +71,20 @@ static void sendIdleTickCountMessage(void)
   SerialLogger_Log(LOGTYPE_IDLE_MONITOR, (uint8_t *)msg, size);
 }
 
-static void sendEdgeListMessage(void)
-{
-  char * msg = AudioProcessor_GetActiveBlockGraphEdgeListToString();
-  int size = strlen(msg);
-  SerialLogger_Log(LOGTYPE_BLOCKGRAPH_EDGELIST_UPDATE, (uint8_t *)msg, size);
-}
+// static void sendEdgeListMessage(void)
+// {
+//   char * msg = AudioProcessor_GetActiveBlockGraphEdgeListToString();
+//   int size = strlen(msg);
+//   SerialLogger_Log(LOGTYPE_BLOCKGRAPH_EDGELIST_UPDATE, (uint8_t *)msg, size);
+// }
 
-static void sendFFTSpectrumMessage(void)
-{
+// static void sendFFTSpectrumMessage(void)
+// {
   //sample_t * spectrum = AudioProcessor_GetFFTSpectrum();
 
   //SerialLogger_LogLiteralString(LOGTYPE_EVENT, "Printing spectrum Stub...\n");
-}
+// }
+#endif
 
 void vApplicationIdleHook(void);
 void vApplicationTickHook (void);

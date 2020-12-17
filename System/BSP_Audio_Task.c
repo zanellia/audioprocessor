@@ -1,15 +1,14 @@
 #include "BSP_Audio_Task.h"
+#include "BSP_LED.h"
 #include "MemoryLogger.h"
 
 #include "BSP_Audio_Buffer_Interface.h"
-#include "AudioProcessor.h"
+// #include "AudioProcessor.h"
 
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "MemoryLogger.h"
-
 #include "SerialLogger.h"
-
 
 enum {
   BUFFER_STATUS_LOWER_HALF_FULL,
@@ -24,15 +23,19 @@ static int16_t recordBuffer[MY_BUFFER_SIZE_SAMPLES/2];
 
 void My_Audio_Task(void * argument)
 {
+
+
   (void)argument;
   RUN_AND_LOG( My_BSP_Audio_Init(); );
 
-  RUN_AND_LOG( AudioProcessor_Init() );
+  // RUN_AND_LOG( AudioProcessor_Init() );
 
   xQueue_BufferStatus = xQueueCreate(32, sizeof(BufferStatusMessage_t));
 
   while (1)
   {
+    
+    BSP_LED_Blink();
     xQueueReceive( xQueue_BufferStatus, &bufferStatusMessage, 1000 );
 
     //Signal other tasks
@@ -49,22 +52,23 @@ void My_Audio_Task(void * argument)
         ExtractSamplesFromDMAReceiveBuffer_LowerHalf(recordBuffer,
                                                      MY_BUFFER_SIZE_SAMPLES / 2);
 
-        int16_t * outBuf = AudioProcessor_ProcessSampleBuffer(recordBuffer,
-                                                              MY_BUFFER_SIZE_SAMPLES / 2);
+        // int16_t * outBuf = AudioProcessor_ProcessSampleBuffer(recordBuffer,
+        //                                                       MY_BUFFER_SIZE_SAMPLES / 2);
 
-        InsertSamplesIntoDMATransmitBuffer_LowerHalf(outBuf,
+        InsertSamplesIntoDMATransmitBuffer_LowerHalf(recordBuffer,
                                                      MY_BUFFER_SIZE_SAMPLES / 2);
         break;
       }
     case BUFFER_STATUS_UPPER_HALF_FULL:
       {
+        // TODO(andrea): this is never reached!
         ExtractSamplesFromDMAReceiveBuffer_UpperHalf(recordBuffer,
                                                      MY_BUFFER_SIZE_SAMPLES / 2);
 
-        int16_t * outBuf = AudioProcessor_ProcessSampleBuffer(recordBuffer,
-                                                              MY_BUFFER_SIZE_SAMPLES / 2);
+        // int16_t * outBuf = AudioProcessor_ProcessSampleBuffer(recordBuffer,
+        //                                                       MY_BUFFER_SIZE_SAMPLES / 2);
 
-        InsertSamplesIntoDMATransmitBuffer_UpperHalf(outBuf,
+        InsertSamplesIntoDMATransmitBuffer_UpperHalf(recordBuffer,
                                                      MY_BUFFER_SIZE_SAMPLES / 2);
         break;
       }
@@ -86,7 +90,8 @@ void My_AUDIO_IN_TransferComplete_CallBack(void)
 void My_AUDIO_IN_HalfTransfer_CallBack(void)
 {
   LOG_ONESHOT("AUDIO IN HALF");
-  static BufferStatusMessage_t msg = BUFFER_STATUS_LOWER_HALF_FULL;
+  // static BufferStatusMessage_t msg = BUFFER_STATUS_LOWER_HALF_FULL;
+  static BufferStatusMessage_t msg = BUFFER_STATUS_UPPER_HALF_FULL;
   static BaseType_t higherPriorityTaskWoken = 0;
   xQueueSendFromISR( xQueue_BufferStatus, &msg, &higherPriorityTaskWoken );
 }
