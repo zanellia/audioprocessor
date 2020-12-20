@@ -35,20 +35,39 @@ void My_Audio_Task(void * argument)
   while (1)
   {
     
-    BSP_LED_Blink();
     xQueueReceive( xQueue_BufferStatus, &bufferStatusMessage, 1000 );
 
     //Signal other tasks
     SerialLogger_Signal();
     Monitor_ResetTickCount();  //tracks CPU usage
 
-    LOG_ONESHOT("RECEIVED QUEUE ITEM");
+    // LOG_ONESHOT("RECEIVED QUEUE ITEM");
+    // HAL_Delay(0.001);
+    // My_AUDIO_IN_HalfTransfer_CallBack();
+    //     ExtractSamplesFromDMAReceiveBuffer_LowerHalf(recordBuffer,
+    //                                                  MY_BUFFER_SIZE_SAMPLES / 2);
 
+    //     // int16_t * outBuf = AudioProcessor_ProcessSampleBuffer(recordBuffer,
+    //     //                                                       MY_BUFFER_SIZE_SAMPLES / 2);
 
+    //     InsertSamplesIntoDMATransmitBuffer_LowerHalf(recordBuffer,
+    //                                                  MY_BUFFER_SIZE_SAMPLES / 2);
+    // HAL_Delay(0.001);
+    // My_AUDIO_IN_TransferComplete_CallBack();
+    // // TODO(andrea): this is never reached!
+    // ExtractSamplesFromDMAReceiveBuffer_UpperHalf(recordBuffer,
+    //                                              MY_BUFFER_SIZE_SAMPLES / 2);
+
+    // int16_t * outBuf = AudioProcessor_ProcessSampleBuffer(recordBuffer,
+    //                                                       MY_BUFFER_SIZE_SAMPLES / 2);
+
+    // InsertSamplesIntoDMATransmitBuffer_UpperHalf(recordBuffer,
+    //                                              MY_BUFFER_SIZE_SAMPLES / 2);
     switch(bufferStatusMessage)
     {
     case BUFFER_STATUS_LOWER_HALF_FULL:
       {
+        BSP_LED_Blink();
         ExtractSamplesFromDMAReceiveBuffer_LowerHalf(recordBuffer,
                                                      MY_BUFFER_SIZE_SAMPLES / 2);
 
@@ -90,8 +109,7 @@ void My_AUDIO_IN_TransferComplete_CallBack(void)
 void My_AUDIO_IN_HalfTransfer_CallBack(void)
 {
   LOG_ONESHOT("AUDIO IN HALF");
-  // static BufferStatusMessage_t msg = BUFFER_STATUS_LOWER_HALF_FULL;
-  static BufferStatusMessage_t msg = BUFFER_STATUS_UPPER_HALF_FULL;
+  static BufferStatusMessage_t msg = BUFFER_STATUS_LOWER_HALF_FULL;
   static BaseType_t higherPriorityTaskWoken = 0;
   xQueueSendFromISR( xQueue_BufferStatus, &msg, &higherPriorityTaskWoken );
 }

@@ -1,5 +1,6 @@
 #ifndef __MEMORYLOGGER_H__
 #define __MEMORYLOGGER_H__
+#define BUFFER_SIZE 1024*16  //large buffer size here
 
 void MemoryLogger_LogString(const char * const str);
 void MemoryLogger_LogStringLn(const char * const str);

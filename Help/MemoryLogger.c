@@ -1,9 +1,11 @@
 #include "MemoryLogger.h"
 #include "tinyprintf.h"
 
-#define BUFFER_SIZE 1024*16  //large buffer size here
-static char log_buffer[BUFFER_SIZE];
-static char * log_ptr = log_buffer;
+// #define BUFFER_SIZE 1024*16  //large buffer size here
+extern char log_buffer[BUFFER_SIZE];
+extern char * log_ptr;
+// char log_buffer[BUFFER_SIZE];
+// char * log_ptr;
 
 static void _memorylogger_snprintf(const char * const format, ...);
 

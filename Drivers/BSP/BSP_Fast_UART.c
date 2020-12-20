@@ -27,7 +27,8 @@ void BSP_Fast_UART_Init(void)
 {
   UartHandle.Instance        = USART6;
 
-  UartHandle.Init.BaudRate   = 921600;
+  // UartHandle.Init.BaudRate   = 921600;
+  UartHandle.Init.BaudRate   = 9600;
   UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
   UartHandle.Init.StopBits   = UART_STOPBITS_1;
   UartHandle.Init.Parity     = UART_PARITY_NONE;
@@ -72,8 +73,8 @@ static void BSP_Fast_UART_MspInit(void)
 #define USARTx_TX_DMA_CHANNEL             DMA_CHANNEL_5
 #define USARTx_DMA_TX_IRQn                DMA2_Stream6_IRQn
 #define USARTx_DMA_TX_IRQHandler          DMA2_Stream6_IRQHandler
-#define USARTx_IRQn                      USART6_IRQn
-#define USARTx_IRQHandler                USART6_IRQHandler
+#define USARTx_IRQn                       USART6_IRQn
+#define USARTx_IRQHandler                 USART6_IRQHandler
 
   hdma_tx.Instance                 = USARTx_TX_DMA_STREAM;
   hdma_tx.Init.Channel             = USARTx_TX_DMA_CHANNEL;

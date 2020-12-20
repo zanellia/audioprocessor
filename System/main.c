@@ -8,6 +8,7 @@
 #include "stm32f7xx_hal.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#define DEBUG_DEFAULT_INTERRUPT_HANDLERS
 
 #define ASSERT(__condition__)                do { if(__condition__) \
                                                    {  assert_failed(__FILE__, __LINE__); \
@@ -38,20 +39,8 @@ void EndIdleMonitor (void);
 // FreeRTOS heap
 uint8_t  ucHeap[configTOTAL_HEAP_SIZE];
 
-
-static void
-led_on(void)
-{
-  HAL_GPIO_WritePin(GPIOI, GPIO_PIN_1, GPIO_PIN_SET);
-}
-
-
-static void
-led_off(void)
-{
-  HAL_GPIO_WritePin(GPIOI, GPIO_PIN_1, GPIO_PIN_RESET);
-}
-
+char log_buffer[BUFFER_SIZE];
+char * log_ptr = log_buffer;
 
 #if 1
 int main(void)
@@ -84,12 +73,13 @@ int main(void)
   SystemClock_Config();/* Configure the system clock @ 200 Mhz */
 
   BSP_LED_Init();
+  // My_BSP_Audio_Init();
+  // BSP_Fast_UART_Init();
   // blink();
 
   int myStackSize = 1024;
 
   // LOWER NUMBER PRIORITIES ARE LOWER PRIORITIES
-
 
   // This should be the lowest priorty task
   // Create this task first because other tasks send messages
@@ -120,7 +110,7 @@ int main(void)
   //             "My LCD Task",
   //             myStackSize,
   //             NULL, //task params
-  //             8,  //priority
+  //             1,  //priority
   //             NULL ); //task handle
 
   // xTaskCreate(MIDI_Input_Task,
@@ -323,12 +313,12 @@ static void SystemClock_Config(void)
   /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
      clocks dividers */
   RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
-  // RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  // RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  // RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  // RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  // ret = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5);
+  ret = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7);
   if(ret != HAL_OK)
   {
     while(1) { ; }

@@ -291,38 +291,38 @@ void SysTick_Handler(void)
   * @param  None
   * @retval None
   */
-void EXTI0_IRQHandler(void)
-{
-  HAL_GPIO_EXTI_IRQHandler(WAKEUP_BUTTON_PIN);
-}
+// void EXTI0_IRQHandler(void)
+// {
+//   HAL_GPIO_EXTI_IRQHandler(WAKEUP_BUTTON_PIN);
+// }
 
 /**
   * @brief  This function handles External line 2 interrupt request.
   * @param  None
   * @retval None
   */
-void EXTI2_IRQHandler(void)
-{
-   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
-}
+// void EXTI2_IRQHandler(void)
+// {
+//    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
+// }
 
 /**
   * @brief  This function handles External line 15_10 interrupt request.
   * @param  None
   * @retval None
   */
-void EXTI15_10_IRQHandler(void)
-{
-  /* Interrupt handler shared between SD_DETECT pin, USER_KEY button and touch screen interrupt */
-  if (__HAL_GPIO_EXTI_GET_IT(SD_DETECT_PIN) != RESET)
-  {
-    HAL_GPIO_EXTI_IRQHandler(SD_DETECT_PIN | TS_INT_PIN | AUDIO_IN_INT_GPIO_PIN);   /* SD detect event or touch screen interrupt */
-  }
-  else
-  {     /* User button event or Touch screen interrupt */
-    HAL_GPIO_EXTI_IRQHandler(KEY_BUTTON_PIN);
-  }
-}
+// void EXTI15_10_IRQHandler(void)
+// {
+//   /* Interrupt handler shared between SD_DETECT pin, USER_KEY button and touch screen interrupt */
+//   if (__HAL_GPIO_EXTI_GET_IT(SD_DETECT_PIN) != RESET)
+//   {
+//     HAL_GPIO_EXTI_IRQHandler(SD_DETECT_PIN | TS_INT_PIN | AUDIO_IN_INT_GPIO_PIN);   /* SD detect event or touch screen interrupt */
+//   }
+//   else
+//   {     /* User button event or Touch screen interrupt */
+//     HAL_GPIO_EXTI_IRQHandler(KEY_BUTTON_PIN);
+//   }
+// }
 
 /**
   * @brief This function handles DMA2 Stream 7 interrupt request.
