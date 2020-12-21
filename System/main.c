@@ -69,6 +69,9 @@ int main(void)
   // YOU HAVE 1 MILLISECOND TO START THE SCHEDULER OR THE PROGRAM WILL CRASH
 
   HAL_Init();
+
+  if (BSP_SDRAM_Init() != 0)
+      while(1)
   // TODO(andrea): can't figure out why this generates a hard fault 
   SystemClock_Config();/* Configure the system clock @ 200 Mhz */
 
@@ -85,19 +88,19 @@ int main(void)
   // Create this task first because other tasks send messages
   // Remember not to send messages in constructors because the message queue won't be created yet
 
-  xTaskCreate(SerialLogger_Task,
-              "Serial Logger Task",
-              myStackSize,
-              NULL, //task params
-              2, //priority
-              NULL ); //task handle
+  // xTaskCreate(SerialLogger_Task,
+  //             "Serial Logger Task",
+  //             myStackSize,
+  //             NULL, //task params
+  //             2, //priority
+  //             NULL ); //task handle
 
-  xTaskCreate(Monitor_Task,
-              "Monitor Task",
-              myStackSize,
-              NULL, //task params
-              1, //priority
-              NULL ); //task handle
+  // xTaskCreate(Monitor_Task,
+  //             "Monitor Task",
+  //             myStackSize,
+  //             NULL, //task params
+  //             1, //priority
+  //             NULL ); //task handle
 
   xTaskCreate(My_Audio_Task,
               "My Audio Task",

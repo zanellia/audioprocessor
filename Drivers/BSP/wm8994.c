@@ -1,4 +1,5 @@
-/** ******************************************************************************
+/**
+  ******************************************************************************
   * @file    wm8994.c
   * @author  MCD Application Team
   * @brief   This file provides the WM8994 Audio Codec driver.
@@ -81,6 +82,25 @@
   * @{
   */
 
+/* Audio codec driver structure initialization */  
+AUDIO_DrvTypeDef wm8994_drv = 
+{
+  wm8994_Init,
+  wm8994_DeInit,
+  wm8994_ReadID,
+
+  wm8994_Play,
+  wm8994_Pause,
+  wm8994_Resume,
+  wm8994_Stop,  
+
+  wm8994_SetFrequency,
+  wm8994_SetVolume,
+  wm8994_SetMute,  
+  wm8994_SetOutputMode,
+
+  wm8994_Reset
+};
 
 static uint32_t outputEnabled = 0;
 static uint32_t inputEnabled = 0;
@@ -288,9 +308,11 @@ uint32_t wm8994_Init(uint16_t DeviceAddr, uint16_t OutputInputDevice, uint8_t Vo
       counter += CODEC_IO_Write(DeviceAddr, 0x28, 0x0011);
 
       /* Disable mute on IN1L_TO_MIXINL and +30dB on IN1L PGA output */
+      // counter += CODEC_IO_Write(DeviceAddr, 0x29, 0x0035);
       counter += CODEC_IO_Write(DeviceAddr, 0x29, 0x0020);
 
       /* Disable mute on IN1R_TO_MIXINL, Gain = +30dB */
+      // counter += CODEC_IO_Write(DeviceAddr, 0x2A, 0x0035);
       counter += CODEC_IO_Write(DeviceAddr, 0x2A, 0x0020);
 
       /* Enable AIF1ADC1 (Left), Enable AIF1ADC1 (Right)
@@ -642,8 +664,6 @@ uint32_t wm8994_ReadID(uint16_t DeviceAddr)
   */
 uint32_t wm8994_Play(uint16_t DeviceAddr, uint16_t* pBuffer, uint16_t Size)
 {
-  (void)Size;
-  (void)pBuffer;
   uint32_t counter = 0;
  
   /* Resumes the audio file playing */  

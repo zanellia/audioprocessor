@@ -3,17 +3,17 @@
 #include "stm32746g_discovery.h"
 
 
-#define LED1_GPIO_PORT                   ((GPIO_TypeDef*)GPIOI)
-#define LED2_GPIO_PORT                   ((GPIO_TypeDef*)GPIOI)
+// #define LED1_GPIO_PORT                   ((GPIO_TypeDef*)GPIOI)
+// #define LED2_GPIO_PORT                   ((GPIO_TypeDef*)GPIOI)
 
-#define LED1_PIN                         ((uint32_t)GPIO_PIN_1)
-#define LED2_PIN                         ((uint32_t)GPIO_PIN_5)
+// #define LED1_PIN                         ((uint32_t)GPIO_PIN_1)
+// #define LED2_PIN                         ((uint32_t)GPIO_PIN_5)
 
-uint32_t GPIO_PIN[] = {LED1_PIN,
-                           LED2_PIN};
+// uint32_t GPIO_PIN[] = {LED1_PIN,
+//                            LED2_PIN};
 
-GPIO_TypeDef* GPIO_PORT[] = {LED1_GPIO_PORT,
-                                 LED2_GPIO_PORT};
+// GPIO_TypeDef* GPIO_PORT[] = {LED1_GPIO_PORT,
+//                                  LED2_GPIO_PORT};
 
 #define LEDx_GPIO_CLK_ENABLE()           __HAL_RCC_GPIOJ_CLK_ENABLE()
 
