@@ -51,8 +51,16 @@
 
 #define MY_BUFFER_SIZE_SAMPLES 1024
 
+#define MY_DMA_BYTES_PER_FRAME 8
+#define MY_DMA_BYTES_PER_MSIZE 2
+#define MY_DMA_BUFFER_SIZE_BYTES MY_BUFFER_SIZE_SAMPLES * MY_DMA_BYTES_PER_FRAME
+#define MY_DMA_BUFFER_SIZE_MSIZES MY_DMA_BUFFER_SIZE_BYTES / MY_DMA_BYTES_PER_MSIZE
+     
 //used by the AudioProcessor
 #define MY_PROCESSING_BUFFER_SIZE_SAMPLES MY_BUFFER_SIZE_SAMPLES / 2
+
+uint8_t  saiDMATransmitBuffer[MY_DMA_BUFFER_SIZE_BYTES];
+uint8_t  saiDMAReceiveBuffer[MY_DMA_BUFFER_SIZE_BYTES];
 
 void ExtractSamplesFromDMAReceiveBuffer_LowerHalf(int16_t * sampleBuffer, uint32_t num_samples);
 void ExtractSamplesFromDMAReceiveBuffer_UpperHalf(int16_t * sampleBuffer, uint32_t num_samples);
@@ -281,9 +289,12 @@ void    BSP_AUDIO_IN_Error_CallBack(void);
 
 /* These function can be modified in case the current settings (e.g. DMA stream)
    need to be changed for specific application needs */
-void  BSP_AUDIO_IN_MspInit(SAI_HandleTypeDef *hsai, void *Params);
+// void  BSP_AUDIO_IN_MspInit(SAI_HandleTypeDef *hsai, void *Params);
+void  BSP_AUDIO_IN_MspInit(void);
 void  BSP_AUDIO_IN_MspDeInit(SAI_HandleTypeDef *hsai, void *Params);
 
+uint8_t BSP_HAL_SAI_Transmit_DMA(uint8_t * saiDMATransmitBuffer, uint16_t size);
+uint8_t BSP_HAL_SAI_Receive_DMA(uint8_t * saiDMAReceiveBuffer, uint16_t size);
 /**
   * @}
   */ 

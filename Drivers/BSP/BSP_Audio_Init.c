@@ -13,8 +13,8 @@
 #define MY_DMA_BUFFER_SIZE_BYTES MY_BUFFER_SIZE_SAMPLES * MY_DMA_BYTES_PER_FRAME
 #define MY_DMA_BUFFER_SIZE_MSIZES MY_DMA_BUFFER_SIZE_BYTES / MY_DMA_BYTES_PER_MSIZE
 
-static uint8_t saiDMATransmitBuffer[MY_DMA_BUFFER_SIZE_BYTES];
-static uint8_t saiDMAReceiveBuffer[MY_DMA_BUFFER_SIZE_BYTES];
+extern saiDMATransmitBuffer[MY_DMA_BUFFER_SIZE_BYTES];
+extern saiDMAReceiveBuffer[MY_DMA_BUFFER_SIZE_BYTES];
 
 static void My_SAI_ClockConfig(uint32_t AudioFreq);
 static void My_AUDIO_OUT_MspInit(void);

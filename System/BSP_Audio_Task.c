@@ -30,8 +30,6 @@ static int16_t recordBuffer[MY_BUFFER_SIZE_SAMPLES/2];
 #define MY_DMA_BUFFER_SIZE_BYTES MY_BUFFER_SIZE_SAMPLES * MY_DMA_BYTES_PER_FRAME
 #define MY_DMA_BUFFER_SIZE_MSIZES MY_DMA_BUFFER_SIZE_BYTES / MY_DMA_BYTES_PER_MSIZE
 
-static uint8_t saiDMATransmitBuffer[MY_DMA_BUFFER_SIZE_BYTES];
-static uint8_t saiDMAReceiveBuffer[MY_DMA_BUFFER_SIZE_BYTES];
 void My_Audio_Task(void * argument)
 {
 
@@ -39,6 +37,7 @@ void My_Audio_Task(void * argument)
 
   /* PLL clock is set depending on the AudioFreq (44.1khz vs 48khz groups) */
   BSP_AUDIO_OUT_ClockConfig(DEFAULT_AUDIO_IN_FREQ, NULL);
+
   BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_HEADPHONE, 70, DEFAULT_AUDIO_IN_FREQ);
   // BSP_AUDIO_OUT_SetAudioFrameSlot(CODEC_AUDIOFRAME_SLOT_02);
 
@@ -49,10 +48,30 @@ void My_Audio_Task(void * argument)
   // BSP_AUDIO_IN_SetVolume(70);
   // BSP_AUDIO_OUT_SetVolume(70);
 
-  BSP_AUDIO_OUT_Play(saiDMATransmitBuffer, MY_BUFFER_SIZE_SAMPLES);
-  BSP_AUDIO_IN_Record(saiDMAReceiveBuffer, MY_BUFFER_SIZE_SAMPLES);
 
-  // RUN_AND_LOG( AudioProcessor_Init() );
+  // TODO(andrea): something breaks here with type casting...
+  
+  BSP_AUDIO_OUT_Play(saiDMATransmitBuffer, MY_DMA_BUFFER_SIZE_MSIZES);
+  BSP_AUDIO_IN_Record(saiDMAReceiveBuffer, MY_DMA_BUFFER_SIZE_MSIZES);
+  // BSP_AUDIO_OUT_Play(saiDMATransmitBuffer, MY_BUFFER_SIZE_SAMPLES);
+  // BSP_AUDIO_IN_Record(saiDMAReceiveBuffer, MY_BUFFER_SIZE_SAMPLES);
+  // BSP_AUDIO_OUT_Play(saiDMATransmitBuffer, 4096*2);
+  // BSP_AUDIO_IN_Record(saiDMAReceiveBuffer, 4096*2);
+
+  // uint8_t status = 0;
+  // uint16_t size = MY_DMA_BUFFER_SIZE_MSIZES; 
+  // // uint16_t size = 1024/2; 
+  // status = BSP_HAL_SAI_Transmit_DMA(saiDMATransmitBuffer, size);
+  // if (status != 0)
+  //     while(1)
+
+  // status = BSP_HAL_SAI_Receive_DMA(saiDMAReceiveBuffer, size);
+  // if (status != 0)
+  //     while(1)
+  
+  // RUN_AND_LOG( HAL_SAI_Transmit_DMA(&haudio_out_sai, saiDMATransmitBuffer, MY_DMA_BUFFER_SIZE_MSIZES); );
+  // RUN_AND_LOG( HAL_SAI_Receive_DMA( &haudio_in_sai,  saiDMAReceiveBuffer,  MY_DMA_BUFFER_SIZE_MSIZES); );
+
 
   xQueue_BufferStatus = xQueueCreate(32, sizeof(BufferStatusMessage_t));
 

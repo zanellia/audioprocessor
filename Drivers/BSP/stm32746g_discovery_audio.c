@@ -154,8 +154,8 @@ uint16_t __IO AudioInVolume = DEFAULT_AUDIO_IN_VOLUME;
 #define MY_DMA_BUFFER_SIZE_BYTES MY_BUFFER_SIZE_SAMPLES * MY_DMA_BYTES_PER_FRAME
 #define MY_DMA_BUFFER_SIZE_MSIZES MY_DMA_BUFFER_SIZE_BYTES / MY_DMA_BYTES_PER_MSIZE
 
-static uint8_t saiDMATransmitBuffer[MY_DMA_BUFFER_SIZE_BYTES];
-static uint8_t saiDMAReceiveBuffer[MY_DMA_BUFFER_SIZE_BYTES];
+// static uint8_t saiDMATransmitBuffer[MY_DMA_BUFFER_SIZE_BYTES];
+// static uint8_t saiDMAReceiveBuffer[MY_DMA_BUFFER_SIZE_BYTES];
 
 static void My_SAI_ClockConfig(uint32_t AudioFreq);
 static void My_AUDIO_OUT_MspInit(void);
@@ -221,7 +221,7 @@ uint8_t BSP_AUDIO_OUT_Init(uint16_t OutputDevice, uint8_t Volume, uint32_t Audio
 uint8_t BSP_AUDIO_OUT_Play(uint16_t* pBuffer, uint32_t Size)
 {
     /* Update the Media layer and enable it for play */  
-    HAL_SAI_Transmit_DMA(&haudio_out_sai, (uint8_t*) pBuffer, DMA_MAX(Size / AUDIODATA_SIZE));
+    HAL_SAI_Transmit_DMA(&haudio_out_sai, (uint8_t*)pBuffer, DMA_MAX(Size / AUDIODATA_SIZE));
     
     return AUDIO_OK;
 }
@@ -558,8 +558,6 @@ __weak void BSP_AUDIO_OUT_MspInit(SAI_HandleTypeDef *hsai, void *Params)
   /* Enable the DMA clock */
   AUDIO_OUT_SAIx_DMAx_CLK_ENABLE();
     
-  if(hsai->Instance == AUDIO_OUT_SAIx)
-  {
     /* Configure the hdma_saiTx handle parameters */   
     hdma_sai_tx.Init.Channel             = AUDIO_OUT_SAIx_DMAx_CHANNEL;
     hdma_sai_tx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
@@ -584,7 +582,6 @@ __weak void BSP_AUDIO_OUT_MspInit(SAI_HandleTypeDef *hsai, void *Params)
     
     /* Configure the DMA Stream */
     HAL_DMA_Init(&hdma_sai_tx);      
-  }
   
   /* SAI DMA IRQ Channel configuration */
   HAL_NVIC_SetPriority(AUDIO_OUT_SAIx_DMAx_IRQ, AUDIO_OUT_IRQ_PREPRIO, 0);
@@ -809,7 +806,8 @@ uint8_t BSP_AUDIO_IN_InitEx(uint16_t InputDevice, uint32_t AudioFreq, uint32_t B
     Prepare the Media to be used for the audio transfer from SAI peripheral to memory */
       /* Init the SAI MSP: this __weak function can be redefined by the application*/
       // BSP_AUDIO_OUT_MspInit(&haudio_in_sai, NULL);  /* Initialize GPIOs for SAI2 block A Master signals */
-    BSP_AUDIO_IN_MspInit(&haudio_in_sai, NULL);
+    // BSP_AUDIO_IN_MspInit(&haudio_in_sai, NULL);
+    BSP_AUDIO_IN_MspInit();
 
     /* Configure SAI in master RX mode :
      *   - SAI2_block_A in master RX mode
@@ -817,6 +815,7 @@ uint8_t BSP_AUDIO_IN_InitEx(uint16_t InputDevice, uint32_t AudioFreq, uint32_t B
      */
 
     my_SAIx_In_Init(AudioFreq);
+    // SAIx_In_Init(SAI_MODEMASTER_TX, slot_active, AudioFreq);
 
   }
   return AUDIO_OK;
@@ -857,7 +856,8 @@ uint8_t BSP_AUDIO_IN_OUT_Init(uint16_t InputDevice, uint16_t OutputDevice, uint3
     if(HAL_SAI_GetState(&haudio_in_sai) == HAL_SAI_STATE_RESET)
     {
       /* Init the SAI MSP: this __weak function can be redefined by the application*/
-      BSP_AUDIO_IN_MspInit(&haudio_in_sai, NULL);
+      // BSP_AUDIO_IN_MspInit(&haudio_in_sai, NULL);
+      BSP_AUDIO_IN_MspInit();
     }
 
     /* SAI data transfer preparation:
@@ -916,16 +916,35 @@ uint8_t BSP_AUDIO_IN_OUT_Init(uint16_t InputDevice, uint16_t OutputDevice, uint3
   *               Be careful that it is not the same unit than BSP_AUDIO_OUT_Play function
   * @retval AUDIO_OK if correct communication, else wrong communication
   */
+
+uint8_t BSP_HAL_SAI_Transmit_DMA(uint8_t * saiDMATransmitBuffer, uint16_t size) {
+    HAL_SAI_Transmit_DMA(&haudio_out_sai, saiDMATransmitBuffer, size);
+  // HAL_StatusTypeDef status = HAL_SAI_Transmit_DMA(&haudio_out_sai, saiDMATransmitBuffer, size);
+  // if (status != HAL_OK) 
+  //     return AUDIO_ERROR;
+  // else 
+      return AUDIO_OK;
+}
+
+uint8_t BSP_HAL_SAI_Receive_DMA(uint8_t * saiDMAReceiveBuffer, uint16_t size) {
+  HAL_SAI_Receive_DMA(&haudio_in_sai, saiDMAReceiveBuffer, size);
+  // HAL_StatusTypeDef status = HAL_SAI_Receive_DMA(&haudio_in_sai, saiDMAReceiveBuffer, size);
+  // if (status != HAL_OK) 
+  //     return AUDIO_ERROR;
+  // else 
+      return AUDIO_OK;
+}
+
 uint8_t  BSP_AUDIO_IN_Record(uint16_t* pbuf, uint32_t size)
 {
   
   /* Start the process receive DMA */
-  HAL_SAI_Receive_DMA(&haudio_in_sai, (uint8_t*)pbuf, size);
+  HAL_SAI_Receive_DMA(&haudio_in_sai, (uint8_t *) pbuf, size);
   
   /* Return AUDIO_OK when all operations are correctly done */
   return AUDIO_OK;
 }
-
+  // RUN_AND_LOG( HAL_SAI_Transmit_DMA(&haudio_out_sai, saiDMATransmitBuffer, MY_DMA_BUFFER_SIZE_MSIZES); );
 /**
   * @brief  Stops audio recording.
   * @param  Option: could be one of the following parameters
@@ -1074,30 +1093,87 @@ __weak void BSP_AUDIO_IN_Error_CallBack(void)
   * @param  Params
   * @retval None
   */
-__weak void BSP_AUDIO_IN_MspInit(SAI_HandleTypeDef *hsai, void *Params)
-{
-  static DMA_HandleTypeDef hdma_sai_rx;
-  GPIO_InitTypeDef  gpio_init_structure;  
+// __weak void BSP_AUDIO_IN_MspInit(SAI_HandleTypeDef *hsai, void *Params)
+// {
+//   static DMA_HandleTypeDef hdma_sai_rx;
+//   GPIO_InitTypeDef  gpio_init_structure;  
 
-  /* Enable SAI clock */
-  AUDIO_IN_SAIx_CLK_ENABLE();
+//   /* Enable SAI clock */
+//   AUDIO_IN_SAIx_CLK_ENABLE();
   
-  /* Enable SD GPIO clock */
-  AUDIO_IN_SAIx_SD_ENABLE();
-  /* CODEC_SAI pin configuration: SD pin */
-  gpio_init_structure.Pin = AUDIO_IN_SAIx_SD_PIN;
-  gpio_init_structure.Mode = GPIO_MODE_AF_PP;
-  gpio_init_structure.Pull = GPIO_NOPULL;
-  gpio_init_structure.Speed = GPIO_SPEED_FAST;
-  gpio_init_structure.Alternate = AUDIO_IN_SAIx_SD_AF;
-  HAL_GPIO_Init(AUDIO_IN_SAIx_SD_GPIO_PORT, &gpio_init_structure);
+//   /* Enable SD GPIO clock */
+//   AUDIO_IN_SAIx_SD_ENABLE();
+//   /* CODEC_SAI pin configuration: SD pin */
+//   gpio_init_structure.Pin = AUDIO_IN_SAIx_SD_PIN;
+//   gpio_init_structure.Mode = GPIO_MODE_AF_PP;
+//   gpio_init_structure.Pull = GPIO_NOPULL;
+//   gpio_init_structure.Speed = GPIO_SPEED_FAST;
+//   gpio_init_structure.Alternate = AUDIO_IN_SAIx_SD_AF;
+//   HAL_GPIO_Init(AUDIO_IN_SAIx_SD_GPIO_PORT, &gpio_init_structure);
 
-  /* Enable Audio INT GPIO clock */
+//   /* Enable Audio INT GPIO clock */
 
-  AUDIO_IN_SAIx_DMAx_CLK_ENABLE();
+//   AUDIO_IN_SAIx_DMAx_CLK_ENABLE();
     
-  if(hsai->Instance == AUDIO_IN_SAIx)
-  {
+//   if(hsai->Instance == AUDIO_IN_SAIx)
+//   {
+//     /* Configure the hdma_sai_rx handle parameters */
+//     hdma_sai_rx.Init.Channel             = AUDIO_IN_SAIx_DMAx_CHANNEL;
+//     hdma_sai_rx.Init.Direction           = DMA_PERIPH_TO_MEMORY;
+//     hdma_sai_rx.Init.PeriphInc           = DMA_PINC_DISABLE;
+//     hdma_sai_rx.Init.MemInc              = DMA_MINC_ENABLE;
+//     hdma_sai_rx.Init.PeriphDataAlignment = AUDIO_IN_SAIx_DMAx_PERIPH_DATA_SIZE;
+//     hdma_sai_rx.Init.MemDataAlignment    = AUDIO_IN_SAIx_DMAx_MEM_DATA_SIZE;
+//     hdma_sai_rx.Init.Mode                = DMA_CIRCULAR;
+//     hdma_sai_rx.Init.Priority            = DMA_PRIORITY_HIGH;
+//     hdma_sai_rx.Init.FIFOMode            = DMA_FIFOMODE_DISABLE;
+//     hdma_sai_rx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
+//     hdma_sai_rx.Init.MemBurst            = DMA_MBURST_SINGLE;
+//     hdma_sai_rx.Init.PeriphBurst         = DMA_MBURST_SINGLE;
+    
+//     hdma_sai_rx.Instance = AUDIO_IN_SAIx_DMAx_STREAM;
+    
+//     /* Associate the DMA handle */
+//     __HAL_LINKDMA(hsai, hdmarx, hdma_sai_rx);
+    
+//     /* Deinitialize the Stream for new transfer */
+//     HAL_DMA_DeInit(&hdma_sai_rx);
+    
+//     /* Configure the DMA Stream */
+//     HAL_DMA_Init(&hdma_sai_rx);
+//   }
+  
+//   /* SAI DMA IRQ Channel configuration */
+//   HAL_NVIC_SetPriority(AUDIO_IN_SAIx_DMAx_IRQ, AUDIO_IN_IRQ_PREPRIO, 0);
+//   HAL_NVIC_EnableIRQ(AUDIO_IN_SAIx_DMAx_IRQ);
+
+//   /* Audio INT IRQ Channel configuration */
+//   // HAL_NVIC_SetPriority(AUDIO_IN_INT_IRQ, AUDIO_IN_IRQ_PREPRIO, 0);
+//   // HAL_NVIC_EnableIRQ(AUDIO_IN_INT_IRQ);
+// }
+
+// Anderson's version
+void BSP_AUDIO_IN_MspInit(void)
+{
+    static DMA_HandleTypeDef hdma_sai_rx;
+    GPIO_InitTypeDef  gpio_init_structure;
+
+    /* Enable SAI clock */
+    AUDIO_IN_SAIx_CLK_ENABLE();
+
+    /* Enable SD GPIO clock */
+    AUDIO_IN_SAIx_SD_ENABLE();
+    /* CODEC_SAI pin configuration: SD pin */
+    gpio_init_structure.Pin = AUDIO_IN_SAIx_SD_PIN;
+    gpio_init_structure.Mode = GPIO_MODE_AF_PP;
+    gpio_init_structure.Pull = GPIO_NOPULL;
+    gpio_init_structure.Speed = GPIO_SPEED_FAST;
+    gpio_init_structure.Alternate = AUDIO_IN_SAIx_SD_AF;
+    HAL_GPIO_Init(AUDIO_IN_SAIx_SD_GPIO_PORT, &gpio_init_structure);
+
+    /* Enable the DMA clock */
+    AUDIO_IN_SAIx_DMAx_CLK_ENABLE();
+
     /* Configure the hdma_sai_rx handle parameters */
     hdma_sai_rx.Init.Channel             = AUDIO_IN_SAIx_DMAx_CHANNEL;
     hdma_sai_rx.Init.Direction           = DMA_PERIPH_TO_MEMORY;
@@ -1111,28 +1187,22 @@ __weak void BSP_AUDIO_IN_MspInit(SAI_HandleTypeDef *hsai, void *Params)
     hdma_sai_rx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
     hdma_sai_rx.Init.MemBurst            = DMA_MBURST_SINGLE;
     hdma_sai_rx.Init.PeriphBurst         = DMA_MBURST_SINGLE;
-    
+
     hdma_sai_rx.Instance = AUDIO_IN_SAIx_DMAx_STREAM;
-    
+
     /* Associate the DMA handle */
-    __HAL_LINKDMA(hsai, hdmarx, hdma_sai_rx);
-    
+    __HAL_LINKDMA(&haudio_in_sai, hdmarx, hdma_sai_rx);
+
     /* Deinitialize the Stream for new transfer */
     HAL_DMA_DeInit(&hdma_sai_rx);
-    
+
     /* Configure the DMA Stream */
     HAL_DMA_Init(&hdma_sai_rx);
-  }
-  
-  /* SAI DMA IRQ Channel configuration */
-  HAL_NVIC_SetPriority(AUDIO_IN_SAIx_DMAx_IRQ, AUDIO_IN_IRQ_PREPRIO, 0);
-  HAL_NVIC_EnableIRQ(AUDIO_IN_SAIx_DMAx_IRQ);
 
-  /* Audio INT IRQ Channel configuration */
-  // HAL_NVIC_SetPriority(AUDIO_IN_INT_IRQ, AUDIO_IN_IRQ_PREPRIO, 0);
-  // HAL_NVIC_EnableIRQ(AUDIO_IN_INT_IRQ);
+    /* SAI DMA IRQ Channel configuration */
+    HAL_NVIC_SetPriority(AUDIO_IN_SAIx_DMAx_IRQ, AUDIO_IN_IRQ_PREPRIO, 0);
+    HAL_NVIC_EnableIRQ(AUDIO_IN_SAIx_DMAx_IRQ);
 }
-
 /**
   * @brief  DeInitializes BSP_AUDIO_IN MSP.
   * @param  hsai: SAI handle
@@ -1234,7 +1304,7 @@ __weak void BSP_AUDIO_IN_MspDeInit(SAI_HandleTypeDef *hsai, void *Params)
 
 static void my_SAIx_In_Init(uint32_t AudioFreq)
 {
-    /* Initialize SAI1 block B in SLAVE RX synchronous from SAI1 block A */
+    /* Initialize SAI2 block B in SLAVE RX synchronous from SAI2 block A */
     /* Initialize the haudio_in_sai Instance parameter */
     haudio_in_sai.Instance = AUDIO_IN_SAIx;
 
