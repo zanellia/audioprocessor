@@ -23,35 +23,34 @@ static BufferStatusMessage_t bufferStatusMessage;
 
 static int16_t recordBuffer[MY_BUFFER_SIZE_SAMPLES/2];
 
-#if 0
+#if 1
+
+#define MY_DMA_BYTES_PER_FRAME 8
+#define MY_DMA_BYTES_PER_MSIZE 2
+#define MY_DMA_BUFFER_SIZE_BYTES MY_BUFFER_SIZE_SAMPLES * MY_DMA_BYTES_PER_FRAME
+#define MY_DMA_BUFFER_SIZE_MSIZES MY_DMA_BUFFER_SIZE_BYTES / MY_DMA_BYTES_PER_MSIZE
+
+static uint8_t saiDMATransmitBuffer[MY_DMA_BUFFER_SIZE_BYTES];
+static uint8_t saiDMAReceiveBuffer[MY_DMA_BUFFER_SIZE_BYTES];
 void My_Audio_Task(void * argument)
 {
 
-
   (void)argument;
 
-  /* Initialize Audio Recorder */
-  if (BSP_AUDIO_IN_Init(DEFAULT_AUDIO_IN_FREQ, DEFAULT_AUDIO_IN_BIT_RESOLUTION, DEFAULT_AUDIO_IN_CHANNEL_NBR) == AUDIO_OK)
-  {
-    BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
-    BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-    BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() - 95, (uint8_t *)"  AUDIO RECORD INIT OK  ", CENTER_MODE);
-
-    BSP_AUDIO_IN_SetVolume(70);
-    BSP_AUDIO_OUT_SetVolume(70);
-  }
-  else
-  {
-    BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
-    BSP_LCD_SetTextColor(LCD_COLOR_RED);
-    BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() - 95, (uint8_t *)"  AUDIO RECORD INIT FAIL", CENTER_MODE);
-    BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize() - 80, (uint8_t *)" Try to reset board ", CENTER_MODE);
-  }
-  
-  // RUN_AND_LOG( BSP_Audio_Init(); );
-  BSP_AUDIO_IN_Record(recordBuffer, MY_BUFFER_SIZE_SAMPLES);
+  /* PLL clock is set depending on the AudioFreq (44.1khz vs 48khz groups) */
+  BSP_AUDIO_OUT_ClockConfig(DEFAULT_AUDIO_IN_FREQ, NULL);
   BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_HEADPHONE, 70, DEFAULT_AUDIO_IN_FREQ);
-  BSP_AUDIO_OUT_SetAudioFrameSlot(CODEC_AUDIOFRAME_SLOT_02);
+  // BSP_AUDIO_OUT_SetAudioFrameSlot(CODEC_AUDIOFRAME_SLOT_02);
+
+  BSP_AUDIO_IN_Init(DEFAULT_AUDIO_IN_FREQ, DEFAULT_AUDIO_IN_BIT_RESOLUTION, DEFAULT_AUDIO_IN_CHANNEL_NBR);
+
+  wm8994_Init(AUDIO_I2C_ADDRESS, INPUT_DEVICE_INPUT_LINE_1 | OUTPUT_DEVICE_HEADPHONE, 100, DEFAULT_AUDIO_IN_FREQ);
+
+  // BSP_AUDIO_IN_SetVolume(70);
+  // BSP_AUDIO_OUT_SetVolume(70);
+
+  BSP_AUDIO_OUT_Play(saiDMATransmitBuffer, MY_BUFFER_SIZE_SAMPLES);
+  BSP_AUDIO_IN_Record(saiDMAReceiveBuffer, MY_BUFFER_SIZE_SAMPLES);
 
   // RUN_AND_LOG( AudioProcessor_Init() );
 
@@ -63,8 +62,8 @@ void My_Audio_Task(void * argument)
     xQueueReceive( xQueue_BufferStatus, &bufferStatusMessage, 1000 );
 
     //Signal other tasks
-    SerialLogger_Signal();
-    Monitor_ResetTickCount();  //tracks CPU usage
+    // SerialLogger_Signal();
+    // Monitor_ResetTickCount();  //tracks CPU usage
 
     switch(bufferStatusMessage)
     {
@@ -96,6 +95,38 @@ void My_Audio_Task(void * argument)
       }
     }
   }
+}
+
+// DMA receive complete ISRs
+void BSP_AUDIO_IN_TransferComplete_CallBack(void)
+{
+  LOG_ONESHOT("AUDIO IN COMPLETE");
+  static BufferStatusMessage_t msg = BUFFER_STATUS_UPPER_HALF_FULL;
+  static BaseType_t higherPriorityTaskWoken = 0;
+  xQueueSendFromISR( xQueue_BufferStatus, &msg, &higherPriorityTaskWoken );
+}
+
+void BSP_AUDIO_IN_HalfTransfer_CallBack(void)
+{
+  LOG_ONESHOT("AUDIO IN HALF");
+  static BufferStatusMessage_t msg = BUFFER_STATUS_LOWER_HALF_FULL;
+  static BaseType_t higherPriorityTaskWoken = 0;
+  xQueueSendFromISR( xQueue_BufferStatus, &msg, &higherPriorityTaskWoken );
+}
+
+void BSP_AUDIO_OUT_Error_CallBack(void){
+}
+void BSP_AUDIO_OUT_TransferComplete_CallBack(void)
+{
+}
+
+/**
+  * @brief  Manages the DMA Half Transfer complete event.
+  * @param  None
+  * @retval None
+  */
+void BSP_AUDIO_OUT_HalfTransfer_CallBack(void)
+{
 }
 #else
 
@@ -241,13 +272,11 @@ static uint8_t AUDIO_Process(void)
 void My_Audio_Task(void * argument)
 {
   uint32_t buff_address = AUDIO_REC_START_ADDR;
+  // uint32_t buff_address = (uint32_t)total_buffer;
   
 
-  // uint32_t buff_address = (uint32_t)total_buffer;
   uint32_t  block_number;
   uint8_t  text[50];
-
-  // AudioRec_SetHint();
 
   /* Initialize Audio Recorder */
   if (BSP_AUDIO_IN_Init(DEFAULT_AUDIO_IN_FREQ, DEFAULT_AUDIO_IN_BIT_RESOLUTION, DEFAULT_AUDIO_IN_CHANNEL_NBR) == AUDIO_OK)
@@ -282,14 +311,6 @@ void My_Audio_Task(void * argument)
     /* Wait end of half block recording */
     while(audio_rec_buffer_state != BUFFER_OFFSET_HALF)
     {
-        //
-      HAL_Delay(10);
-      // if (CheckForUserInput() > 0)
-      // {
-      //   /* Stop Player before close Test */
-      //   BSP_AUDIO_OUT_Stop(CODEC_PDWN_SW);
-      //   return;
-      // }
     }
     audio_rec_buffer_state = BUFFER_OFFSET_NONE;
         /* Copy recorded 1st half block in SDRAM */
@@ -302,13 +323,6 @@ void My_Audio_Task(void * argument)
     /* Wait end of one block recording */
     while(audio_rec_buffer_state != BUFFER_OFFSET_FULL)
     {
-      HAL_Delay(10);
-      // if (CheckForUserInput() > 0)
-      // {
-      //   /* Stop Player before close Test */
-      //   BSP_AUDIO_OUT_Stop(CODEC_PDWN_SW);
-      //   return;
-      // }
     }
     audio_rec_buffer_state = BUFFER_OFFSET_NONE;
     /* Copy recorded 2nd half block in SDRAM */
@@ -355,15 +369,6 @@ void My_Audio_Task(void * argument)
   while (1)
   {
     AUDIO_Process();
-
-    HAL_Delay(10);
-    
-    // if (CheckForUserInput() > 0)
-    // {
-    //   /* Stop Player before close Test */
-    //   BSP_AUDIO_OUT_Stop(CODEC_PDWN_SW);
-    //   return;
-    // }
   }
 }
 
@@ -446,24 +451,4 @@ void BSP_AUDIO_OUT_HalfTransfer_CallBack(void)
 }
 #endif
 
-// DMA receive complete ISRs
-
-void My_AUDIO_IN_TransferComplete_CallBack(void)
-{
-  LOG_ONESHOT("AUDIO IN COMPLETE");
-  static BufferStatusMessage_t msg = BUFFER_STATUS_UPPER_HALF_FULL;
-  static BaseType_t higherPriorityTaskWoken = 0;
-  xQueueSendFromISR( xQueue_BufferStatus, &msg, &higherPriorityTaskWoken );
-}
-
-void My_AUDIO_IN_HalfTransfer_CallBack(void)
-{
-  LOG_ONESHOT("AUDIO IN HALF");
-  static BufferStatusMessage_t msg = BUFFER_STATUS_LOWER_HALF_FULL;
-  static BaseType_t higherPriorityTaskWoken = 0;
-  xQueueSendFromISR( xQueue_BufferStatus, &msg, &higherPriorityTaskWoken );
-}
-
-void My_AUDIO_OUT_Error_CallBack(void){
-}
 

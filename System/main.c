@@ -95,12 +95,12 @@ int main(void)
   //             2, //priority
   //             NULL ); //task handle
 
-  // xTaskCreate(Monitor_Task,
-  //             "Monitor Task",
-  //             myStackSize,
-  //             NULL, //task params
-  //             1, //priority
-  //             NULL ); //task handle
+  xTaskCreate(Monitor_Task,
+              "Monitor Task",
+              myStackSize,
+              NULL, //task params
+              1, //priority
+              NULL ); //task handle
 
   xTaskCreate(My_Audio_Task,
               "My Audio Task",
