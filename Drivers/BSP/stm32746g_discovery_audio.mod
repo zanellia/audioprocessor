@@ -46,7 +46,30 @@
 /* Include audio component Driver */
 #include "wm8994.h"
 #include "stm32746g_discovery.h"
-extern uint32_t audio_rec_buffer_state;
+
+#include <stdint.h>
+
+#define MY_BUFFER_SIZE_SAMPLES 1024
+
+#define MY_DMA_BYTES_PER_FRAME 8
+#define MY_DMA_BYTES_PER_MSIZE 2
+#define MY_DMA_BUFFER_SIZE_BYTES MY_BUFFER_SIZE_SAMPLES * MY_DMA_BYTES_PER_FRAME
+#define MY_DMA_BUFFER_SIZE_MSIZES MY_DMA_BUFFER_SIZE_BYTES / MY_DMA_BYTES_PER_MSIZE
+     
+//used by the AudioProcessor
+#define MY_PROCESSING_BUFFER_SIZE_SAMPLES MY_BUFFER_SIZE_SAMPLES / 2
+
+uint8_t  saiDMATransmitBuffer[MY_DMA_BUFFER_SIZE_BYTES];
+uint8_t  saiDMAReceiveBuffer[MY_DMA_BUFFER_SIZE_BYTES];
+
+void ExtractSamplesFromDMAReceiveBuffer_LowerHalf(int16_t * sampleBuffer, uint32_t num_samples);
+void ExtractSamplesFromDMAReceiveBuffer_UpperHalf(int16_t * sampleBuffer, uint32_t num_samples);
+void InsertSamplesIntoDMATransmitBuffer_LowerHalf(int16_t * sampleBuffer, uint32_t num_samples);
+void InsertSamplesIntoDMATransmitBuffer_UpperHalf(int16_t * sampleBuffer, uint32_t num_samples);
+
+extern void My_AUDIO_IN_TransferComplete_CallBack(void);
+extern void My_AUDIO_IN_HalfTransfer_CallBack(void);
+extern void My_AUDIO_OUT_Error_CallBack(void);
 
 /** @addtogroup BSP
   * @{
@@ -164,10 +187,8 @@ extern uint32_t audio_rec_buffer_state;
 #define AUDIO_TIMEOUT                       ((uint8_t)2)
 
 /* AudioFreq * DataSize (2 bytes) * NumChannels (Stereo: 2) */
-#define DEFAULT_AUDIO_IN_FREQ               I2S_AUDIOFREQ_16K
-// #define DEFAULT_AUDIO_IN_FREQ               I2S_AUDIOFREQ_48K
-//#define DEFAULT_AUDIO_IN_BIT_RESOLUTION     ((uint8_t)16)
-//#define DEFAULT_AUDIO_IN_BIT_RESOLUTION     ((uint8_t)24)
+// #define DEFAULT_AUDIO_IN_FREQ               I2S_AUDIOFREQ_16K
+#define DEFAULT_AUDIO_IN_FREQ               I2S_AUDIOFREQ_48K
 #define DEFAULT_AUDIO_IN_BIT_RESOLUTION     ((uint8_t)16)
 #define DEFAULT_AUDIO_IN_CHANNEL_NBR        ((uint8_t)1) /* Mono = 1, Stereo = 2 */
 #define DEFAULT_AUDIO_IN_VOLUME             ((uint16_t)64)
@@ -210,7 +231,7 @@ extern __IO uint16_t AudioInVolume;
 /** @addtogroup STM32746G_DISCOVERY_AUDIO_OUT_Exported_Functions
   * @{
   */
-uint8_t BSP_AUDIO_OUT_Init(uint16_t OutputDevice, uint8_t Volume, uint32_t AudioFreq);
+uint8_t BSP_AUDIO_OUT_Init(uint16_t OutputDevice, uint32_t AudioFreq);
 uint8_t BSP_AUDIO_OUT_Play(uint16_t* pBuffer, uint32_t Size);
 void    BSP_AUDIO_OUT_ChangeBuffer(uint16_t *pData, uint16_t Size);
 uint8_t BSP_AUDIO_OUT_Pause(void);
@@ -225,18 +246,18 @@ void    BSP_AUDIO_OUT_DeInit(void);
 
 /* User Callbacks: user has to implement these functions in his code if they are needed. */
 /* This function is called when the requested data has been completely transferred.*/
-void    BSP_AUDIO_OUT_TransferComplete_CallBack(void);
+extern void    BSP_AUDIO_OUT_TransferComplete_CallBack(void);
 
 /* This function is called when half of the requested buffer has been transferred. */
-void    BSP_AUDIO_OUT_HalfTransfer_CallBack(void);
+extern void    BSP_AUDIO_OUT_HalfTransfer_CallBack(void);
 
 /* This function is called when an Interrupt due to transfer error on or peripheral
    error occurs. */
-void    BSP_AUDIO_OUT_Error_CallBack(void);
+extern void    BSP_AUDIO_OUT_Error_CallBack(void);
 
 /* These function can be modified in case the current settings (e.g. DMA stream)
    need to be changed for specific application needs */
-void  BSP_AUDIO_OUT_ClockConfig(SAI_HandleTypeDef *hsai, uint32_t AudioFreq, void *Params);
+void  BSP_AUDIO_OUT_ClockConfig(uint32_t AudioFreq, void *Params);
 void  BSP_AUDIO_OUT_MspInit(SAI_HandleTypeDef *hsai, void *Params);
 void  BSP_AUDIO_OUT_MspDeInit(SAI_HandleTypeDef *hsai, void *Params);
 
@@ -270,8 +291,11 @@ void    BSP_AUDIO_IN_Error_CallBack(void);
 /* These function can be modified in case the current settings (e.g. DMA stream)
    need to be changed for specific application needs */
 void  BSP_AUDIO_IN_MspInit(SAI_HandleTypeDef *hsai, void *Params);
+// void  BSP_AUDIO_IN_MspInit(void);
 void  BSP_AUDIO_IN_MspDeInit(SAI_HandleTypeDef *hsai, void *Params);
 
+uint8_t BSP_HAL_SAI_Transmit_DMA(uint8_t * saiDMATransmitBuffer, uint16_t size);
+uint8_t BSP_HAL_SAI_Receive_DMA(uint8_t * saiDMAReceiveBuffer, uint16_t size);
 /**
   * @}
   */ 

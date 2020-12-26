@@ -8,6 +8,8 @@
 #include "stm32f7xx_hal.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "stm32746g_discovery_audio.h"
+#include "stm32746g_discovery_lcd.h"
 #define DEBUG_DEFAULT_INTERRUPT_HANDLERS
 
 #define ASSERT(__condition__)                do { if(__condition__) \
@@ -30,19 +32,19 @@ void assert_failed(uint8_t* file, uint32_t line)
 static void SystemClock_Config(void);
 static void MPU_Config(void);
 
-// // Declare these somewhere else?
+// Declare these somewhere else?
 void vApplicationMallocFailedHook( void );
 void vApplicationStackOverflowHook( TaskHandle_t xTask, char *pcTaskName );
 void StartIdleMonitor (void);
 void EndIdleMonitor (void);
 
-// FreeRTOS heap
+//FreeRTOS heap
 uint8_t  ucHeap[configTOTAL_HEAP_SIZE];
 
 char log_buffer[BUFFER_SIZE];
 char * log_ptr = log_buffer;
+uint32_t  audio_rec_buffer_state;
 
-#if 1
 int main(void)
 {
   MPU_Config();
@@ -72,16 +74,14 @@ int main(void)
 
   if (BSP_SDRAM_Init() != 0)
       while(1)
-  // TODO(andrea): can't figure out why this generates a hard fault 
+
   SystemClock_Config();/* Configure the system clock @ 200 Mhz */
 
   BSP_LED_Init();
-  // My_BSP_Audio_Init();
-  // BSP_Fast_UART_Init();
-  // blink();
 
   int myStackSize = 1024;
 
+#if 1
   // LOWER NUMBER PRIORITIES ARE LOWER PRIORITIES
 
   // This should be the lowest priorty task
@@ -102,7 +102,7 @@ int main(void)
               1, //priority
               NULL ); //task handle
 
-  xTaskCreate(My_Audio_Task,
+  xTaskCreate(LoopBack_Task,
               "My Audio Task",
               myStackSize,
               NULL, //task params
@@ -132,7 +132,8 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   for( ;; );
 }
-#else
+#endif
+#if 0 
 
 #include "stm32746g_discovery_lcd.h"
 #define SDRAM_DEVICE_ADDR  ((uint32_t)0xC0000000)
@@ -226,7 +227,6 @@ int main()
 }
 #endif
 
-#if 1
 void vApplicationStackOverflowHook( TaskHandle_t xTask, char *pcTaskName )
 {
   (void)xTask;
@@ -248,8 +248,6 @@ void StartIdleMonitor (void)
 void EndIdleMonitor (void)
 {
 }
-
-#endif
 
 
 

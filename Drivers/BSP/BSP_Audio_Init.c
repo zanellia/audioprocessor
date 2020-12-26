@@ -22,8 +22,8 @@ static void My_SAI_Out_Init(uint32_t AudioFreq);
 static void My_AUDIO_IN_MspInit(void);
 static void My_SAI_In_Init(uint32_t AudioFreq);
 
-static SAI_HandleTypeDef         haudio_out_sai;
-static SAI_HandleTypeDef         haudio_in_sai;
+extern SAI_HandleTypeDef         haudio_out_sai;
+extern SAI_HandleTypeDef         haudio_in_sai;
 
 static uint32_t frequency = AUDIO_FREQUENCY_48K;
 static uint8_t volume = 80;
