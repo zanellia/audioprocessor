@@ -27,8 +27,8 @@ void BSP_Fast_UART_Init(void)
 {
   UartHandle.Instance        = USART6;
 
-  // UartHandle.Init.BaudRate   = 921600;
-  UartHandle.Init.BaudRate   = 9600;
+  UartHandle.Init.BaudRate   = 921600;
+  // UartHandle.Init.BaudRate   = 9600;
   UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
   UartHandle.Init.StopBits   = UART_STOPBITS_1;
   UartHandle.Init.Parity     = UART_PARITY_NONE;

@@ -164,8 +164,8 @@ extern uint32_t audio_rec_buffer_state;
 #define AUDIO_TIMEOUT                       ((uint8_t)2)
 
 /* AudioFreq * DataSize (2 bytes) * NumChannels (Stereo: 2) */
-#define DEFAULT_AUDIO_IN_FREQ               I2S_AUDIOFREQ_16K
-// #define DEFAULT_AUDIO_IN_FREQ               I2S_AUDIOFREQ_48K
+// #define DEFAULT_AUDIO_IN_FREQ               I2S_AUDIOFREQ_16K
+#define DEFAULT_AUDIO_IN_FREQ               I2S_AUDIOFREQ_48K
 //#define DEFAULT_AUDIO_IN_BIT_RESOLUTION     ((uint8_t)16)
 //#define DEFAULT_AUDIO_IN_BIT_RESOLUTION     ((uint8_t)24)
 #define DEFAULT_AUDIO_IN_BIT_RESOLUTION     ((uint8_t)16)
@@ -222,6 +222,10 @@ void    BSP_AUDIO_OUT_SetAudioFrameSlot(uint32_t AudioFrameSlot);
 uint8_t BSP_AUDIO_OUT_SetMute(uint32_t Cmd);
 uint8_t BSP_AUDIO_OUT_SetOutputMode(uint8_t Output);
 void    BSP_AUDIO_OUT_DeInit(void);
+
+
+uint8_t BSP_AUDIO_HAL_SAI_Transmit_DMA(uint8_t* pBuffer, uint16_t Size);
+uint8_t BSP_AUDIO_HAL_SAI_Receive_DMA(uint8_t* pBuffer, uint16_t Size);
 
 /* User Callbacks: user has to implement these functions in his code if they are needed. */
 /* This function is called when the requested data has been completely transferred.*/

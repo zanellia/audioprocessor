@@ -85,12 +85,12 @@ int main(void)
 
   BSP_LED_Init();
 
-  int myStackSize = 1024;
+  int myStackSize = 3*1024;
 
 #if 1
   // LOWER NUMBER PRIORITIES ARE LOWER PRIORITIES
 
-  // This should be the lowest priorty task
+  // This should be the lowest priority task
   // Create this task first because other tasks send messages
   // Remember not to send messages in constructors because the message queue won't be created yet
 

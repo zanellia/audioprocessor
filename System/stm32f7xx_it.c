@@ -28,8 +28,9 @@
 #include "stm32746g_discovery.h"
 #include "stm32746g_discovery_audio.h"
 #include "BSP_LED.h"
+#include "MemoryLogger.h"
 
-
+#define FREERTOS 1
 /** @addtogroup STM32F7xx_HAL_Examples
   * @{
   */
@@ -72,6 +73,7 @@ void NMI_Handler(void)
   * @param  None
   * @retval None
   */
+#if !FREERTOS
 void HardFault_Handler(void)
 {
   /* Go to infinite loop when Hard Fault exception occurs */
@@ -79,6 +81,7 @@ void HardFault_Handler(void)
   {
   }
 }
+#endif
 
 /**
   * @brief  This function handles Memory Manage exception.
@@ -151,10 +154,12 @@ void DebugMon_Handler(void)
   * @param  None
   * @retval None
   */
+#if !FREERTOS
 void SysTick_Handler(void)
 {
   HAL_IncTick();
 }
+#endif
 
 /******************************************************************************/
 /*                 STM32F7xx Peripherals Interrupt Handlers                   */
@@ -271,3 +276,26 @@ void AUDIO_OUT_SAIx_DMAx_IRQHandler(void)
   */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+#if FREERTOS
+extern void xPortSysTickHandler(void);
+
+void SysTick_Handler(void)
+{
+  LOG_ONESHOT("SYSTICK HANDLER");
+  HAL_IncTick();
+  LOG_ONESHOT("INC TICK");
+  xPortSysTickHandler();
+  LOG_ONESHOT("FREERRTOS TICK");
+}
+
+
+void HardFault_Handler(void)
+{
+  BSP_LED_On(LED_RED);
+  LOG_ONESHOT("\n\nHARD FAULT\n\n");
+  /* Go to infinite loop when Hard Fault exception occurs */
+  while (1)
+  {
+  }
+}
+#endif

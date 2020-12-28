@@ -10,16 +10,21 @@
 #include "SerialLogger.h"
 
 enum {
-  BUFFER_STATUS_LOWER_HALF_FULL,
-  BUFFER_STATUS_UPPER_HALF_FULL
+    BUFFER_STATUS_LOWER_HALF_FULL,
+    BUFFER_STATUS_UPPER_HALF_FULL
 };
+
 typedef uint32_t BufferStatusMessage_t ;
 
 static QueueHandle_t xQueue_BufferStatus;
 static BufferStatusMessage_t bufferStatusMessage;
 
+#define AUDIO_BLOCK_SIZE   2*((uint32_t)512)
 
-// #define AUDIO_BUFFER_SIZE       2048
+#define SDRAM 0
+
+#if SDRAM
+#define AUDIO_BUFFER_SIZE       2048
 #define AUDIO_DEFAULT_VOLUME    70
 #define CAMERA_RES_MAX_X          640
 #define CAMERA_RES_MAX_Y          480
@@ -35,95 +40,149 @@ static BufferStatusMessage_t bufferStatusMessage;
 #define SRAM_WRITE_READ_ADDR_OFFSET  SDRAM_WRITE_READ_ADDR_OFFSET
 
 #define AUDIO_REC_START_ADDR         SDRAM_WRITE_READ_ADDR
-#define AUDIO_BLOCK_SIZE   2*((uint32_t)512)
 #define AUDIO_BUFFER_IN    AUDIO_REC_START_ADDR     /* In SDRAM */
 #define AUDIO_BUFFER_OUT   (AUDIO_REC_START_ADDR + (AUDIO_BLOCK_SIZE * 2)) /* In SDRAM */
 
-static uint16_t  internal_buffer[AUDIO_BLOCK_SIZE] = {0};
+#else
+
+int16_t audio_buffer_in[AUDIO_BLOCK_SIZE/2] = {1};
+int16_t audio_buffer_out[AUDIO_BLOCK_SIZE/2] = {1};
+
+#define MY_BUFFER_SIZE_SAMPLES 1024
+
+#define MY_DMA_BYTES_PER_FRAME 8
+#define MY_DMA_BYTES_PER_MSIZE 2
+#define MY_DMA_BUFFER_SIZE_BYTES MY_BUFFER_SIZE_SAMPLES * MY_DMA_BYTES_PER_FRAME
+#define MY_DMA_BUFFER_SIZE_MSIZES MY_DMA_BUFFER_SIZE_BYTES / MY_DMA_BYTES_PER_MSIZE
+
+static uint8_t saiDMATransmitBuffer[MY_DMA_BUFFER_SIZE_BYTES];
+static uint8_t saiDMAReceiveBuffer[MY_DMA_BUFFER_SIZE_BYTES];
+
+static void ExtractSamplesFromDMAReceiveBuffer_LowerHalf(int16_t * sampleBuffer, uint32_t num_samples)
+{
+  for(uint32_t i = 0; i<num_samples; i++){
+    int16_t * samplePointer = (int16_t *) & saiDMAReceiveBuffer[i*8];
+    sampleBuffer[i] = *samplePointer;
+  }
+}
+
+static void ExtractSamplesFromDMAReceiveBuffer_UpperHalf(int16_t * sampleBuffer, uint32_t num_samples)
+{
+  for(uint32_t i = 0; i<num_samples; i++){
+    int16_t * samplePointer = (int16_t *) & saiDMAReceiveBuffer[(MY_DMA_BUFFER_SIZE_BYTES / 2) + i*8];
+    sampleBuffer[i] = *samplePointer;
+  }
+}
+
+static void InsertSamplesIntoDMATransmitBuffer_LowerHalf(int16_t * sampleBuffer, uint32_t num_samples)
+{
+  for(uint32_t i=0; i<num_samples; i++){
+    int16_t * p = (int16_t *) &saiDMATransmitBuffer[i*8];
+    *p = sampleBuffer[i];
+    *(p+2) = sampleBuffer[i];
+  }
+}
+
+static void InsertSamplesIntoDMATransmitBuffer_UpperHalf(int16_t * sampleBuffer, uint32_t num_samples)
+{
+  for(uint32_t i=0; i<num_samples; i++){
+    int16_t * p = (int16_t *) &saiDMATransmitBuffer[(MY_DMA_BUFFER_SIZE_BYTES / 2) + i*8];
+    *p = sampleBuffer[i];
+    *(p+2) = sampleBuffer[i];
+  }
+}
+
+#endif
 
 uint32_t  audio_rec_buffer_state;
 
-typedef enum
-{
-  BUFFER_OFFSET_NONE = 0,
-  BUFFER_OFFSET_HALF = 1,
-  BUFFER_OFFSET_FULL = 2,
-}BUFFER_StateTypeDef;
+// typedef enum
+// {
+//     BUFFER_OFFSET_NONE = 0,
+//     BUFFER_OFFSET_HALF = 1,
+//     BUFFER_OFFSET_FULL = 2,
+// }BUFFER_StateTypeDef;
 
+typedef uint32_t BufferStatusMessage_t ;
+
+static QueueHandle_t xQueue_BufferStatus;
+static BufferStatusMessage_t bufferStatusMessage;
 
 void LoopBack_Task(void * argument)
 {
-  uint8_t  text[30];
+    uint8_t  text[30];
 
-  /* Initialize Audio Recorder */
-  int status = BSP_AUDIO_IN_OUT_Init(INPUT_DEVICE_INPUT_LINE_1, OUTPUT_DEVICE_HEADPHONE, DEFAULT_AUDIO_IN_FREQ, DEFAULT_AUDIO_IN_BIT_RESOLUTION, DEFAULT_AUDIO_IN_CHANNEL_NBR);
+    /* Initialize Audio Recorder */
+    int status = BSP_AUDIO_IN_OUT_Init(INPUT_DEVICE_INPUT_LINE_1, OUTPUT_DEVICE_HEADPHONE, DEFAULT_AUDIO_IN_FREQ, DEFAULT_AUDIO_IN_BIT_RESOLUTION, DEFAULT_AUDIO_IN_CHANNEL_NBR);
 
-  /* Initialize SDRAM buffers */
-  uint32_t buff_in_address = AUDIO_BUFFER_IN;
-  uint32_t buff_out_address = AUDIO_BUFFER_OUT;
-  memset((uint16_t*)AUDIO_BUFFER_IN, 0, AUDIO_BLOCK_SIZE*2);
-  memset((uint16_t*)AUDIO_BUFFER_OUT, 0, AUDIO_BLOCK_SIZE*2);
-  audio_rec_buffer_state = BUFFER_OFFSET_NONE;
-
-  BSP_AUDIO_IN_SetVolume(70);
-  BSP_AUDIO_OUT_SetVolume(70);
-
-  /* Start Recording */
-  // BSP_AUDIO_IN_Record((uint16_t*)AUDIO_BUFFER_IN, AUDIO_BLOCK_SIZE);
-  BSP_AUDIO_IN_Record((uint16_t*)AUDIO_BUFFER_OUT, AUDIO_BLOCK_SIZE);
-
-  /* Start Playback */
-  BSP_AUDIO_OUT_SetAudioFrameSlot(CODEC_AUDIOFRAME_SLOT_02);
-  BSP_AUDIO_OUT_Play((uint16_t*)AUDIO_BUFFER_OUT, AUDIO_BLOCK_SIZE * 2);
-
-  uint32_t audio_buffer_out = AUDIO_BUFFER_OUT;
-  uint32_t audio_buffer_in = AUDIO_BUFFER_IN;
-
-  while (1)
-  {
-    BSP_LED_Blink();
-    // TODO(andrea): figure out why memcpy does not work!
-#if 0
-    /* Wait end of half block recording */
-    while(audio_rec_buffer_state != BUFFER_OFFSET_HALF)
-    {
-    // HAL_Delay(10);
-    }
-
-    audio_rec_buffer_state = BUFFER_OFFSET_NONE;
-    /* Copy recorded 1st half block */
-    // memcpy((uint16_t *)(AUDIO_BUFFER_OUT),
-    //        (uint16_t *)(AUDIO_BUFFER_IN),
-    //        AUDIO_BLOCK_SIZE);
-
-    /* Wait end of one block recording */
-    while(audio_rec_buffer_state != BUFFER_OFFSET_FULL)
-    {
-    // HAL_Delay(10);
-    }
-    audio_rec_buffer_state = BUFFER_OFFSET_NONE;
-    /* Copy recorded 2nd half block */
-    // memcpy((uint16_t *)(AUDIO_BUFFER_OUT + (AUDIO_BLOCK_SIZE)),
-    //        (uint16_t *)(AUDIO_BUFFER_IN + (AUDIO_BLOCK_SIZE)),
-    //        AUDIO_BLOCK_SIZE);
-
+#if SDRAM
+    /* Initialize SDRAM buffers */
+    memset((uint16_t*)AUDIO_BUFFER_IN, 0, AUDIO_BLOCK_SIZE*2);
+    memset((uint16_t*)AUDIO_BUFFER_OUT, 0, AUDIO_BLOCK_SIZE*2);
 #endif
-  }
+    // audio_rec_buffer_state = BUFFER_OFFSET_NONE;
+
+    BSP_AUDIO_IN_SetVolume(70);
+    BSP_AUDIO_OUT_SetVolume(70);
+
+    /* Start Recording */
+#if SDRAM
+    BSP_AUDIO_IN_Record((uint16_t*)AUDIO_BUFFER_IN, AUDIO_BLOCK_SIZE);
+    // BSP_AUDIO_IN_Record((uint16_t*)AUDIO_BUFFER_OUT, AUDIO_BLOCK_SIZE);
+
+    // /* Start Playback */
+    // BSP_AUDIO_OUT_SetAudioFrameSlot(CODEC_AUDIOFRAME_SLOT_02);
+    BSP_AUDIO_OUT_Play((uint16_t*)AUDIO_BUFFER_OUT, AUDIO_BLOCK_SIZE);
+#else
+    BSP_AUDIO_HAL_SAI_Receive_DMA((uint8_t*)saiDMAReceiveBuffer, MY_DMA_BUFFER_SIZE_MSIZES);
+
+    // /* Start Playback */
+    BSP_AUDIO_HAL_SAI_Transmit_DMA((uint8_t*)saiDMATransmitBuffer, MY_DMA_BUFFER_SIZE_MSIZES);
+#endif
+
+    xQueue_BufferStatus = xQueueCreate(32, sizeof(BufferStatusMessage_t));
+
+    while (1)
+    {
+        xQueueReceive( xQueue_BufferStatus, &bufferStatusMessage, 1000 );
+
+        //Signal other tasks
+        SerialLogger_Signal();
+        Monitor_ResetTickCount();  //tracks CPU usage
+
+        BSP_LED_Blink();
+        // TODO(andrea): figure out why memcpy does not work!
+        switch(bufferStatusMessage)
+        {
+        case BUFFER_STATUS_LOWER_HALF_FULL:
+
+        for(int i =0; i < MY_DMA_BUFFER_SIZE_BYTES/2; i++)
+            saiDMATransmitBuffer[i] = saiDMAReceiveBuffer[i]; 
+
+        break;
+
+        case BUFFER_STATUS_UPPER_HALF_FULL:
+
+        for(int i =0; i < MY_DMA_BUFFER_SIZE_BYTES/2; i++)
+            saiDMATransmitBuffer[MY_DMA_BUFFER_SIZE_BYTES/2+i] = saiDMAReceiveBuffer[MY_DMA_BUFFER_SIZE_BYTES/2+i]; 
+
+        break;
+        }
+    }
 }
 
 void BSP_AUDIO_IN_TransferComplete_CallBack(void)
 {
-  audio_rec_buffer_state = BUFFER_OFFSET_FULL;
-  return;
+  LOG_ONESHOT("AUDIO IN COMPLETE");
+  static BufferStatusMessage_t msg = BUFFER_STATUS_UPPER_HALF_FULL;
+  static BaseType_t higherPriorityTaskWoken = 0;
+  xQueueSendFromISR( xQueue_BufferStatus, &msg, &higherPriorityTaskWoken );
 }
 
-/**
-  * @brief  Manages the DMA Half Transfer complete interrupt.
-  * @param  None
-  * @retval None
-  */
 void BSP_AUDIO_IN_HalfTransfer_CallBack(void)
 {
-  audio_rec_buffer_state = BUFFER_OFFSET_HALF;
-  return;
+  LOG_ONESHOT("AUDIO IN HALF");
+  static BufferStatusMessage_t msg = BUFFER_STATUS_LOWER_HALF_FULL;
+  static BaseType_t higherPriorityTaskWoken = 0;
+  xQueueSendFromISR( xQueue_BufferStatus, &msg, &higherPriorityTaskWoken );
 }

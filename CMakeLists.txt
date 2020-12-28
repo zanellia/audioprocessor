@@ -64,7 +64,7 @@ set(C_SOURCES_HAL_BSP
   "${SOURCE_ROOT_DIR}/Drivers/BSP/stm32746g_discovery_audio.c"
   "${SOURCE_ROOT_DIR}/Drivers/BSP/stm32746g_discovery.c"
   "${SOURCE_ROOT_DIR}/Drivers/BSP/BSP_Bringup.c"
-  # "${SOURCE_ROOT_DIR}/Drivers/BSP/BSP_UART.c"
+  "${SOURCE_ROOT_DIR}/Drivers/BSP/BSP_UART.c"
   "${SOURCE_ROOT_DIR}/Drivers/BSP/BSP_Fast_UART.c"
   "${SOURCE_ROOT_DIR}/Drivers/BSP/BSP_LED.c"
   "${SOURCE_ROOT_DIR}/Drivers/BSP/wm8994.c"
