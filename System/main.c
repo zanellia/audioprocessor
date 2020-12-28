@@ -72,8 +72,14 @@ int main(void)
 
   HAL_Init();
 
-  if (BSP_SDRAM_Init() != 0)
-      while(1)
+  // if (BSP_SDRAM_Init() != 0)
+  //     while(1)
+
+  // if (BSP_Fast_UART_Init() != 0)
+  //     while(1)
+
+  // if (BSP_UART_Init() != 0)
+  //     while(1)
 
   SystemClock_Config();/* Configure the system clock @ 200 Mhz */
 
@@ -122,8 +128,6 @@ int main(void)
   //             NULL, //task params
   //             3, //priority
   //             NULL ); //task handle
-
-
 
   // setup_led();
   // blink();

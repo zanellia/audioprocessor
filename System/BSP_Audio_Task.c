@@ -39,7 +39,6 @@ static BufferStatusMessage_t bufferStatusMessage;
 #define AUDIO_BUFFER_IN    AUDIO_REC_START_ADDR     /* In SDRAM */
 #define AUDIO_BUFFER_OUT   (AUDIO_REC_START_ADDR + (AUDIO_BLOCK_SIZE * 2)) /* In SDRAM */
 
-
 static uint16_t  internal_buffer[AUDIO_BLOCK_SIZE] = {0};
 
 uint32_t  audio_rec_buffer_state;
