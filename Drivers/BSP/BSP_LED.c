@@ -11,7 +11,7 @@ void BSP_LED_Blink()
       BSP_LED_Off();
     else
       BSP_LED_On();
-    for (int j = 0; j < 100000; j++)
+    for (int j = 0; j < 1000; j++)
       __asm volatile("nop");
   }
 }

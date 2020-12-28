@@ -85,7 +85,7 @@ int main(void)
 
   BSP_LED_Init();
 
-  int myStackSize = 3*1024;
+  int myStackSize = 1024;
 
 #if 1
   // LOWER NUMBER PRIORITIES ARE LOWER PRIORITIES
@@ -129,8 +129,6 @@ int main(void)
   //             3, //priority
   //             NULL ); //task handle
 
-  // setup_led();
-  // blink();
   vTaskStartScheduler();
 
   /* We should never get here as control is now taken by the scheduler */
